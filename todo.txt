@@ -1,0 +1,20 @@
+* Alternative matching algorithms. 
+* Polish PC matching...
+* Figure out licensing and include example data.
+* improve readme. 
+
+
+
+TODO:
+* implement a simple stereo photogrammetry example.
+	* Input: two images with known internal camera parameters, and some GCPs in one of them (if sufficient GCPs then we can also determine internal camera params). 
+    * Use template match to find common features between images
+	* Use LMFsolve on a the matched set pixel coordinates to find external camera parameters and XYZ coords.
+	
+* example using opticalflow algos. 
+
+* sat example (landsat?).
+
+
+	
+	
