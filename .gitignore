@@ -1,12 +1,8 @@
 
-opticalflowtest.m
-data/
-nolicense/
-phasecorr2test.m
+demos/
 html/
-cias_data/
-imcorr/
-ciasexample.m
+repoexclude/
+
 
 # Windows image file caches
 Thumbs.db

@@ -311,15 +311,13 @@ end
 if size(A,3)<3
     A=repmat(A,[1 1 3]);
 end
-screensize=get(0,'ScreenSize');
-downsample=ceil(size(A,1)*4/screensize(3));
 [X,Y]=meshgrid([0.5 size(A,2)+0.5],[0.5 size(A,1)+0.5]);
-if downsample>1
-    A=imresize(A,1/downsample); %TODO:remove dependency!
-end
 
-%image(x,y,A);
-
+% screensize=get(0,'ScreenSize');
+% downsample=ceil(size(A,1)*2/screensize(3));
+% if downsample>1
+%     A=imresize(A,1/downsample); %TODO:remove dependency!
+% end
 surface(X,Y,zeros(size(X)),A,'EdgeColor','none','FaceColor','texturemap');
 axis off equal image ij; 
 %it is much faster as a texture map!
