@@ -12,7 +12,6 @@
 % # Georeference tracked points and calculate real world velocities.
 %
 %
-
 close all
 
 %% Setup file locations and load images & data
@@ -21,30 +20,29 @@ close all
 
 idA=8902; idB=8937; % image ids (/file numbers)
 
-datafolder='demos';
-fA=fullfile(datafolder,sprintf('IMG_%4.0f.jpg',idA));
-fB=fullfile(datafolder,sprintf('IMG_%4.0f.jpg',idB));
+imagefolder='data';
+fA=fullfile(imagefolder,sprintf('IMG_%4.0f.jpg',idA));
+fB=fullfile(imagefolder,sprintf('IMG_%4.0f.jpg',idB));
 
 %load images:
 A=imread(fA);
 B=imread(fB);
 
-metaA=imfinfo(fA);tA=datenum(metaA.DateTime,'yyyy:mm:dd HH:MM:SS');
-metaB=imfinfo(fB);tB=datenum(metaB.DateTime,'yyyy:mm:dd HH:MM:SS');
 
-dem=load(fullfile(datafolder,'dem')); %load DEM
-gcpA=load(fullfile(datafolder,'gcp8902.txt'));%load ground control points for image A
+dem=load(fullfile('data','dem')); %load DEM
+gcpA=load(fullfile('data','gcp8902.txt'));%load ground control points for image A
 
+photodates=load(fullfile('data','photodates.mat'));
+tA=interp1(photodates.id,photodates.t,idA); %time of image A
+tB=interp1(photodates.id,photodates.t,idB); %time of image B
 
 %% Determine camera parameters for image A
 %
 % # Initial crude guess at camera parameters
 % # Use GCPs to optimize camera parameters
 % 
-
-%calculate focal length in pixel units:
-FocalLength=30; %mm 
-SensorSize=[22.0 14.8]; %m
+FocalLength=30; %mm
+SensorSize=[22.0 14.8]; %mm
 imgsz=size(A);
 f=imgsz([2 1]).*(FocalLength./SensorSize); 
 
@@ -80,10 +78,10 @@ title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 %First get an approximate estimate of the image shift using a single large
 %template
 points=[3000, 995];
-xyo=templatematch(A,B,points,200,260,0.5,[0 0],false,'PC') 
+[xyo,C]=templatematch(A,B,points,200,260,0.5,[0 0],false,'PC') 
 
 %Get a whole bunch of image shift estimates using a grid of probe points.
-%Having multiple shift estimates will allow us to determine camera
+%having multiple shift estimates will allow us to determine camera
 %rotation.
 [pX,pY]=meshgrid(200:700:4000,100:400:1000);
 points=round([pX(:) pY(:)+pX(:)/10]); 
@@ -211,7 +209,7 @@ figure;
 image(dem.x,dem.y,dem.rgb)
 axis equal xy off tight
 hold on
-Vn=sqrt(sum(V(:,1:2).^2,2));
+Vn=sqrt(sum(V.^2,2));
 keep=signal2noise>2&C(:,1)>.8;
 scatter(xyzA(keep,1),xyzA(keep,2),100,Vn(keep),'.')
 quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,'k')
@@ -233,18 +231,24 @@ gradY=interp2(dem.X,dem.Y,gradY,xyzA(:,1),xyzA(:,2));
 Vgn=V(:,1).*gradX+V(:,2).*gradY;
 Vg=[Vgn.*gradX Vgn.*gradY];
 
+%     da=mod(atan2(V(:,2),V(:,1))-atan2(gradY,gradX)+pi,2*pi)-pi;
+%     [jj median(da(keep)*180/pi)]
+% end
 
 figure
 image(dem.x,dem.y,dem.rgb)
 axis equal xy off tight
+colormap jet
 
 hold on
-scatter(xyzA(keep,1),xyzA(keep,2),100,Vgn(keep),'.')
+scatter(xyzA(keep,1),xyzA(keep,2),100,sqrt(sum(Vg(keep).^2,2)),'.')
 quiver(xyzA(keep,1),xyzA(keep,2),Vg(keep,1)./Vgn(keep),Vg(keep,2)./Vgn(keep),.2,'k')
 quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,'k','color',[.5 .5 .5])
 
+
+
 caxis([0 1])
-colormap jet
+
 colorbar('southoutside','limits',caxis)
 
 plot(camA.xyz(1),camA.xyz(2),'r+')
