@@ -43,8 +43,8 @@ gcpA=load(fullfile(datafolder,'gcp8902.txt'));%load ground control points for im
 % 
 
 %calculate focal length in pixel units:
-FocalLength=30; %mm 
-SensorSize=[22.0 14.8]; %m
+FocalLength=30; %mm (can also be found here: metaA.DigitalCamera.FocalLength)
+SensorSize=[22.0 14.7]; %mm: http://www.cnet.com/products/canon-eos-rebel-t3/specs/
 imgsz=size(A);
 f=imgsz([2 1]).*(FocalLength./SensorSize); 
 
