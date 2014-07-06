@@ -318,7 +318,7 @@ end
 % if downsample>1
 %     A=imresize(A,1/downsample); %TODO:remove dependency!
 % end
-surface(X,Y,zeros(size(X)),A,'EdgeColor','none','FaceColor','texturemap');
+surface(X,Y,zeros(size(X))-1,A,'EdgeColor','none','FaceColor','texturemap');
 axis off equal image ij; 
 %it is much faster as a texture map!
 
