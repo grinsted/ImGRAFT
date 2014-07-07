@@ -9,9 +9,6 @@ On the [ImGRAFT](http://imgraft.glaciology.net) web site you will find more deta
 This software is open source (See licensing details elsewhere). In addition to the formal licensing terms, We would greatly appreciate an acknowledgement. Preferably in the form of a citation (once the paper is out) and a link to the web-page. 
 
 
-Note: Example data not released yet because licensing terms has not yet been decided. 
-
-
 
 ## File descriptions:
 
