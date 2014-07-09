@@ -323,5 +323,5 @@ hold on
 % plot(mean(X(:)),mean(Y(:)),'r.','markersize',10)
 
 
-%it is much faster as a texture map!
+%it is much faster as a texture map! (Bizarrely)
 

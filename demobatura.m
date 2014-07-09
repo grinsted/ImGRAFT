@@ -1,7 +1,9 @@
 %% Batura Glacier, Karakoram
 %
 % CIAS is another free feature tracking software. This is a GUI written in 
-% IDL by K‰‰b & Vollmer. Here we use ImGRAFT to track one of the CIAS example data sets using orthorectified Landsat 7 images from Batura (sample data attached below). Here's how you might track it in ImGRAFT. The single highlighted line is the one doing most of the business.
+% IDL by K‰‰b & Vollmer. Here we use ImGRAFT to track one of the CIAS example
+% data sets using orthorectified Landsat 7 images from Batura. 
+% Here's how you might track it in ImGRAFT. 
 % 
 % Note: this example needs the mapping toolbox in order to read the
 % geo-tiffs.
@@ -27,9 +29,9 @@ whtemplate=10; %template/chip size
 whsearch=30; %search window size
 super=1; %No super sampling 
 [dxy,C]=templatematch(A,B,uvA,whtemplate,whsearch,super,[0 0],{'2001' '2002'},'myncc');
+close all
 
 %visualize the results
-close all
 %turn the intensity image into an RGB image
 %so that it does not interfere with colorbar:
 imshow(repmat(A,[1 1 3])) 

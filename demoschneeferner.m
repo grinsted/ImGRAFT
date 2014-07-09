@@ -1,6 +1,6 @@
 %% Schneefernerkopf example using data from PRACTISE 
 %
-% The PRACTISE (Photo Recti?cation And Classi?caTIon SoftwarE) open source
+% The PRACTISE (Photo Rectification And ClassificaTIon SoftwarE) open source
 % package has an example data set  from Schneefernerkopf, southern Germany
 % (supplementary data to Härer et al. 2013) . Here, we show how you can use
 % the ImGRAFT camera model on this data set. The example data set is also
@@ -54,5 +54,5 @@ plot(uvDEM(:,1),uvDEM(:,2),'c.','markersize',5)
 
 uvGCP=camA.project(gcpA(:,1:3));
 plot(gcpA(:,4),gcpA(:,5),'+',uvGCP(:,1),uvGCP(:,2),'rx')
-legend('30m DEM','UV of GCP','projection of GCPs','location','northwest')
+legend('30m DEM','UV of GCP','projection of GCPs','location','south')
 title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
