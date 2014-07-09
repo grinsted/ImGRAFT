@@ -316,8 +316,9 @@ end
 % if downsample>1
 %     A=imresize(A,1/downsample); %TODO:remove dependency!
 % end
-surface(X,Y,zeros(size(X))-1000,A,'EdgeColor','none','FaceColor','texturemap');
+surface(X,Y,zeros(size(X))-1,A,'EdgeColor','none','FaceColor','texturemap');
 axis off tight equal image ij; 
+zlim([-1.1 .1]) %critical as otherwise matlabs clipping plane will throw out points with z=0 in older versions of matlab.
 hold on
 % plot(mean(X(:)),mean(Y(:)),'r.','markersize',10)
 
