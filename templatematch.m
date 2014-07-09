@@ -113,14 +113,12 @@ if ~isempty(showprogress)
     set(fh,'renderer','opengl')
     hax=axes('pos',[0 0.01 0.5 0.95]);
     showimg(A);
-    hold on
     text(0.5,1,showprogress{1},'units','normalized','vert','bottom','fontname','courier','horiz','center')
     plot(points(:,1),points(:,2),'b+','markersize',2)
     hax(2)=axes('pos',[0.5 0.01 0.5 0.95]);
     showimg(B); hold on
     htext=text(1,1,'','units','normalized','vert','bottom','fontname','courier','horiz','right');
     text(0.5,1,showprogress{end},'units','normalized','vert','bottom','fontname','courier','horiz','center')
-    hold on
     linkaxes(hax,'xy');
     axis image, axis ij, drawnow
     lastdraw=cputime;
@@ -305,7 +303,7 @@ if isfloat(A)
     A=uint8(A*255);
 else
     if strcmp(class(A),'uint16')
-        A=uint8(A./intmax(A));
+        A=uint8(A./256);
     end
 end
 if size(A,3)<3
@@ -318,7 +316,11 @@ end
 % if downsample>1
 %     A=imresize(A,1/downsample); %TODO:remove dependency!
 % end
-surface(X,Y,zeros(size(X))-1,A,'EdgeColor','none','FaceColor','texturemap');
-axis off equal image ij; 
+surface(X,Y,zeros(size(X))-1000,A,'EdgeColor','none','FaceColor','texturemap');
+axis off tight equal image ij; 
+hold on
+% plot(mean(X(:)),mean(Y(:)),'r.','markersize',10)
+
+
 %it is much faster as a texture map!
 

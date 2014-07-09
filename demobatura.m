@@ -39,7 +39,7 @@ signal2noise=C(:,1)./C(:,2);
 keep=(signal2noise>2.3)&(C(:,1)>.7);
 V=dxy*dx; 
 Vn=sqrt(sum(V.^2,2));
-scatter(uvA(keep,1),uvA(keep,2),100,Vn(keep),'.') %colors speed
+scatter(uvA(keep,1),uvA(keep,2),200,Vn(keep),'.') %colors speed
 quiver(uvA(keep,1),uvA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),0.2,'k') %arrows show direction. 
 colormap jet
 caxis([0 200])
