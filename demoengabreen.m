@@ -212,14 +212,14 @@ image(dem.x,dem.y,dem.rgb)
 axis equal xy off tight
 hold on
 Vn=sqrt(sum(V(:,1:2).^2,2));
-keep=signal2noise>2&C(:,1)>.8;
+keep=signal2noise>2&C(:,1)>.7;
 scatter(xyzA(keep,1),xyzA(keep,2),100,Vn(keep),'.')
 quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,'k')
 caxis([0 1])
 colormap jet
-hcb=colorbar('southoutside')
+hcb=colorbar('southoutside');
 if ~verLessThan('matlab', '8.4.0')
-    set(hcb,'limits',caxis) %workaround for a bug in Matlab 2014b preview
+    set(hcb,'limits',caxis); %workaround for a bug in Matlab 2014b preview
 end
 plot(camA.xyz(1),camA.xyz(2),'r+')
 title('Velocity in metres per day')
@@ -248,9 +248,9 @@ quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,'k',
 
 caxis([0 1])
 colormap jet
-hcb=colorbar('southoutside')
+hcb=colorbar('southoutside');
 if ~verLessThan('matlab', '8.4.0')
-    set(hcb,'limits',caxis) %workaround for a bug in Matlab 2014b preview
+    set(hcb,'limits',caxis); %workaround for a bug in Matlab 2014b preview
 end
 
 plot(camA.xyz(1),camA.xyz(2),'r+')

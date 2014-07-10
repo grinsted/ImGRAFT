@@ -114,9 +114,15 @@ if ~isempty(showprogress)
     hax=axes('pos',[0 0.01 0.5 0.95]);
     showimg(A);
     text(0.5,1,showprogress{1},'units','normalized','vert','bottom','fontname','courier','horiz','center')
-    plot(points(:,1),points(:,2),'b+','markersize',2)
+    %plot(points(:,1),points(:,2),'b+','markersize',2)
+    cc=zeros(2,size(points,1));
+    hscatterA=mesh(points(:,[1 1])',points(:,[2 2])',zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
+    colormap jet
+    caxis([0 1])
     hax(2)=axes('pos',[0.5 0.01 0.5 0.95]);
     showimg(B); hold on
+    hscatterB=mesh(points(:,[1 1])'+dxyo(1),points(:,[2 2])'+dxyo(2),zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
+    caxis([0 1])
     htext=text(1,1,'','units','normalized','vert','bottom','fontname','courier','horiz','right');
     text(0.5,1,showprogress{end},'units','normalized','vert','bottom','fontname','courier','horiz','center')
     linkaxes(hax,'xy');
@@ -191,13 +197,17 @@ for ii=1:Np
             %TODO
         else
             %fprintf('xy:%4.0f,%4.0f  dxy:%4.1f,%4.1f  C:%3.0f,%3.0f\n',points(ii,:),dxy(ii,:),round(Cout(ii,:)*100));
-            color=[1 min(nanmax(Cout(ii,1)-Cout(ii,2),0),1) 0];
-            plot(hax(1),p(1),p(2),'+','color',color,'markersize',2)
-            plot(hax(2),p(1)+dxy(ii,1),p(2)+dxy(ii,2),'+','color',color,'markersize',2)
+            %color=[1 min(nanmax(Cout(ii,1)-Cout(ii,2),0),1) 0];
+%             plot(hax(1),p(1),p(2),'+','color',color,'markersize',2)
+%             plot(hax(2),p(1)+dxy(ii,1),p(2)+dxy(ii,2),'+','color',color,'markersize',2)
+            cc(:,ii)=min(nanmax(Cout(ii,1)-Cout(ii,2),0),1);
             set(htext,'string',sprintf('%+5.1f %+5.1f ',dxy(ii,1),dxy(ii,2)))%,'units','normalized','vert','top')
             set(hprogress,'position',[0 0 ii/Np 0.01])
             set(fh,'name',sprintf('Templatematch %3.0f%%',ii*100/Np));
             if (cputime-lastdraw)>.3||(cputime<lastdraw)
+                set(hscatterA,'cdata',cc);
+                posB=points+dxy;
+                set(hscatterB,'cdata',cc,'xdata',posB(:,[1 1])','ydata',posB(:,[2 2])');
                 drawnow
                 lastdraw=cputime;
             end
