@@ -34,7 +34,8 @@ close all
 %visualize the results
 %turn the intensity image into an RGB image
 %so that it does not interfere with colorbar:
-imshow(repmat(A,[1 1 3])) 
+image(repmat(A,[1 1 3]),'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014+
+axis equal off tight ij
 hold on
 
 signal2noise=C(:,1)./C(:,2);
@@ -45,9 +46,9 @@ scatter(uvA(keep,1),uvA(keep,2),200,Vn(keep),'.') %colors speed
 quiver(uvA(keep,1),uvA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),0.2,'k') %arrows show direction. 
 colormap jet
 caxis([0 200])
-hcb=colorbar('southoutside');
-if ~verLessThan('matlab', '8.4.0')
-    set(hcb,'limits',caxis) %workaround for a critical colorbar bug in Matlab 2014b preview... TODO: check if bug present in final release
-end
+colorbar('southoutside');
+% if ~verLessThan('matlab', '8.4.0')
+%     set(hcb,'limits',caxis) %workaround for a critical colorbar bug in Matlab 2014b preview... TODO: check if bug present in final release
+% end
 
 

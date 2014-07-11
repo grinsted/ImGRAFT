@@ -96,10 +96,7 @@ if islogical(showprogress)
     else
         showprogress=[];
     end
-end
-
-%INITIALIZE PROGRESS FIGURE....
-if ~isempty(showprogress)
+else
     if ~iscell(showprogress)
         if isnumeric(showprogress)
             showprogress=arrayfun(@num2str,showprogress,'uniformoutput',false);
@@ -107,14 +104,15 @@ if ~isempty(showprogress)
             showprogress=num2cell(showprogress);
         end
     end
+end
+
+%INITIALIZE PROGRESS FIGURE....
+if ~isempty(showprogress)
     fh=figure;
-    set(fh,'name','Templatematch progress','NumberTitle','off');
-    clf
-    set(fh,'renderer','opengl')
+    set(fh,'name','Templatematch progress','NumberTitle','off','renderer','opengl')
     hax=axes('pos',[0 0.01 0.5 0.95]);
     showimg(A);
     text(0.5,1,showprogress{1},'units','normalized','vert','bottom','fontname','courier','horiz','center')
-    %plot(points(:,1),points(:,2),'b+','markersize',2)
     cc=zeros(2,size(points,1));
     hscatterA=mesh(points(:,[1 1])',points(:,[2 2])',zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
     colormap jet
@@ -311,7 +309,7 @@ if R(1)~=0
 end
 A=A./diff(R);
 
-function showimg(A)
+function showimg(A) %replacement for imshow. -faster and no reliance on image processing toolbox
 if isfloat(A)
     A=uint8(A*255);
 else
@@ -319,22 +317,21 @@ else
         A=uint8(A./256);
     end
 end
-if size(A,3)<3
-    A=repmat(A,[1 1 3]);
-end
-[X,Y]=meshgrid([0.5 size(A,2)+0.5],[0.5 size(A,1)+0.5]);
-
 % screensize=get(0,'ScreenSize');
 % downsample=ceil(size(A,1)*2/screensize(3));
 % if downsample>1
 %     A=imresize(A,1/downsample); %TODO:remove dependency!
 % end
-surface(X,Y,zeros(size(X))-1,A,'EdgeColor','none','FaceColor','texturemap');
+if size(A,3)<3
+    A=repmat(A,[1 1 3]);
+end
+[X,Y]=meshgrid([0.5 size(A,2)+0.5],[0.5 size(A,1)+0.5]);
+surface(X,Y,zeros(size(X))-1,A,'EdgeColor','none','FaceColor','texturemap'); %it is much faster than using an image! (Bizarrely)
 axis off tight equal image ij; 
-zlim([-1.1 .1]) %critical as otherwise matlabs clipping plane will throw out points with z=0 in older versions of matlab.
+zlim([-1.1 .1]) %critical as otherwise matlabs clipping plane will throw out points with z=0 in older versions of matlab. BUG.
 hold on
-% plot(mean(X(:)),mean(Y(:)),'r.','markersize',10)
 
 
-%it is much faster as a texture map! (Bizarrely)
+
+
 

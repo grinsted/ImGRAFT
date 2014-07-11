@@ -1,3 +1,11 @@
+%% IMCORR Bindschadler Ice Stream example
+%
+% The IMCORR feature tracking software comes with two example image pairs.
+% These are Landsat TM subscenes of a portion of Ice Stream D in West
+% Antarctica (Now know as Bindschadler Ice Stream). This page shows how
+% these can be tracked using the ImGRAFT toolbox.
+% 
+
 
 datafolder=downloadDemoData('imcorr');
 
@@ -15,7 +23,8 @@ super=1;
 [dxy,C]=templatematch(A,B,uvA,whtemplate,whsearch,super,[0 0],{'1987' '1989'},'myncc');
 
 close all
-imshow(repmat(A,[1 1 3]))
+image(repmat(A,[1 1 3]),'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014+)
+equal off tight ij
 hold on
 signal2noise=C(:,1)./C(:,2);
 keep=(signal2noise>2)&(C(:,1)>.5);
@@ -25,8 +34,4 @@ scatter(uvA(keep,1),uvA(keep,2),300,Vn(keep),'.') %colors speed
 quiver(uvA(keep,1),uvA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),0.2,'k') %arrows show direction. 
 colormap jet
 caxis([0 400])
-hcb=colorbar('southoutside');
-if ~verLessThan('matlab', '8.4.0')
-    set(hcb,'limits',caxis) %workaround for a critical colorbar bug in Matlab 2014b preview... TODO: check if bug present in final release
-end
-
+colorbar('southoutside');

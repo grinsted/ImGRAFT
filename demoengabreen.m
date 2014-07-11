@@ -208,7 +208,7 @@ V=(xyzB-xyzA)./(tB-tA); % 3d velocity.
 
 %plot candidate points on map view
 figure;
-image(dem.x,dem.y,dem.rgb)
+image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014+)
 axis equal xy off tight
 hold on
 Vn=sqrt(sum(V(:,1:2).^2,2));
@@ -218,9 +218,6 @@ quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,'k')
 caxis([0 1])
 colormap jet
 hcb=colorbar('southoutside');
-if ~verLessThan('matlab', '8.4.0')
-    set(hcb,'limits',caxis); %workaround for a bug in Matlab 2014b preview
-end
 plot(camA.xyz(1),camA.xyz(2),'r+')
 title('Velocity in metres per day')
 
@@ -238,7 +235,7 @@ Vg=[Vgn.*gradX Vgn.*gradY];
 
 
 figure
-image(dem.x,dem.y,dem.rgb)
+image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014+
 axis equal xy off tight
 
 hold on
@@ -249,9 +246,6 @@ quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,'k',
 caxis([0 1])
 colormap jet
 hcb=colorbar('southoutside');
-if ~verLessThan('matlab', '8.4.0')
-    set(hcb,'limits',caxis); %workaround for a bug in Matlab 2014b preview
-end
 
 plot(camA.xyz(1),camA.xyz(2),'r+')
 title('Velocity along slope direction in metres per day')
