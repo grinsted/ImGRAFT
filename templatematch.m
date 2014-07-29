@@ -116,7 +116,7 @@ if ~isempty(showprogress)
         text(0.5,1,showprogress{1},'units','normalized','vert','bottom','fontname','courier','horiz','center')
         cc=zeros(2,size(points,1));
         hscatterA=mesh(points(:,[1 1])',points(:,[2 2])',zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
-        colormap jet
+        colormap autumn
         caxis([0 1])
         hax(2)=axes('pos',[0.5 0.01 0.5 0.95],'drawmode','fast');
         showimg(B); hold on
@@ -161,9 +161,13 @@ end
 for ii=1:Np
     p=points(ii,:);
     
+    
+    
     try
-        BB=B(p(2)+dxyo(ii,2)+(-whsearch(2):whsearch(2)),p(1)+dxyo(ii,1)+(-whsearch(1):whsearch(1)),:);
-        AA=A(p(2)+(-whtemplate(2):whtemplate(2)),p(1)+(-whtemplate(1):whtemplate(1)),:);
+        row=min(ii,size(whsearch,1));
+        BB=B(p(2)+dxyo(ii,2)+(-whsearch(row,2):whsearch(row,2)),p(1)+dxyo(ii,1)+(-whsearch(row,1):whsearch(row,1)),:);
+        row=min(ii,size(whtemplate,1));
+        AA=A(p(2)+(-whtemplate(row,2):whtemplate(row,2)),p(1)+(-whtemplate(row,1):whtemplate(row,1)),:);
     catch
         %out of bounds
         continue
