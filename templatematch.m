@@ -1,5 +1,5 @@
 function [dxy,Cout]=templatematch(A,B,points,whtemplate,whsearch,super,dxyo,showprogress,method)
-% Feature tracking by template matching 
+% Feature tracking by template matching
 %
 % [dxy,C]=templatematch(A,B,points,whtemplate,whsearch,[super,dxyo,showprogress,method])
 %
@@ -91,9 +91,7 @@ switch upper(method)
 end
 
 if islogical(showprogress)
-    if showprogress
-        showprogress={'A' 'B'};
-    else
+    if ~showprogress
         showprogress=[];
     end
 else
@@ -108,27 +106,31 @@ end
 
 %INITIALIZE PROGRESS FIGURE....
 if ~isempty(showprogress)
-    fh=figure;
-    set(fh,'name','Templatematch progress','NumberTitle','off','renderer','opengl')
-    hax=axes('pos',[0 0.01 0.5 0.95]);
-    showimg(A);
-    text(0.5,1,showprogress{1},'units','normalized','vert','bottom','fontname','courier','horiz','center')
-    cc=zeros(2,size(points,1));
-    hscatterA=mesh(points(:,[1 1])',points(:,[2 2])',zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
-    colormap jet
-    caxis([0 1])
-    hax(2)=axes('pos',[0.5 0.01 0.5 0.95]);
-    showimg(B); hold on
-    hscatterB=mesh(points(:,[1 1])'+dxyo(1),points(:,[2 2])'+dxyo(2),zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
-    caxis([0 1])
-    htext=text(1,1,'','units','normalized','vert','bottom','fontname','courier','horiz','right');
-    text(0.5,1,showprogress{end},'units','normalized','vert','bottom','fontname','courier','horiz','center')
-    linkaxes(hax,'xy');
-    axis image, axis ij, drawnow
-    lastdraw=cputime;
-    hprogress=annotation(fh,'rectangle',[0 0 0 0.01],'color','none','facecolor','r');
-    set(findobj(gcf,'-property','erasemode'),'erasemode','none')
+    if islogical(showprogress)
+        progressmsg='';
+    else
+        fh=figure;
+        set(fh,'name','Templatematch progress','NumberTitle','off','renderer','opengl')
+        hax=axes('pos',[0 0.01 0.5 0.95],'drawmode','fast');
+        showimg(A);
+        text(0.5,1,showprogress{1},'units','normalized','vert','bottom','fontname','courier','horiz','center')
+        cc=zeros(2,size(points,1));
+        hscatterA=mesh(points(:,[1 1])',points(:,[2 2])',zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
+        colormap jet
+        caxis([0 1])
+        hax(2)=axes('pos',[0.5 0.01 0.5 0.95],'drawmode','fast');
+        showimg(B); hold on
+        hscatterB=mesh(points(:,[1 1])'+dxyo(1),points(:,[2 2])'+dxyo(2),zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
+        caxis([0 1])
+        htext=text(1,1,'','units','normalized','vert','bottom','fontname','courier','horiz','right');
+        text(0.5,1,showprogress{end},'units','normalized','vert','bottom','fontname','courier','horiz','center')
+        linkaxes(hax,'xy');
+        axis image, axis ij, drawnow
+        hprogress=annotation(fh,'rectangle',[0 0 0 0.01],'color','none','facecolor','r');
+        set(findobj(gcf,'-property','erasemode'),'erasemode','none')
+    end
 end
+lastdraw=cputime;
 
 if super==1
     resizefun=@(A,super)A;
@@ -192,20 +194,25 @@ for ii=1:Np
     
     if ~isempty(showprogress)
         if islogical(showprogress)
-            %TODO
+            if (cputime-lastdraw)>1/15||(cputime<lastdraw)||(ii==Np)
+                progressmsg(:)=8; %8=backspace;
+                fprintf(progressmsg);
+                progressmsg=[uint8((1:20)<((ii/Np)*20)).*'+' ''];
+                progressmsg=sprintf('Template Match [%s]  (%5.1f %+5.1f)',progressmsg,dxy(ii,1),dxy(ii,2));
+                fprintf('%s',progressmsg)
+                drawnow
+                lastdraw=cputime;
+            end
         else
-            %fprintf('xy:%4.0f,%4.0f  dxy:%4.1f,%4.1f  C:%3.0f,%3.0f\n',points(ii,:),dxy(ii,:),round(Cout(ii,:)*100));
-            %color=[1 min(nanmax(Cout(ii,1)-Cout(ii,2),0),1) 0];
-%             plot(hax(1),p(1),p(2),'+','color',color,'markersize',2)
-%             plot(hax(2),p(1)+dxy(ii,1),p(2)+dxy(ii,2),'+','color',color,'markersize',2)
             cc(:,ii)=min(nanmax(Cout(ii,1)-Cout(ii,2),0),1);
             set(htext,'string',sprintf('%+5.1f %+5.1f ',dxy(ii,1),dxy(ii,2)))%,'units','normalized','vert','top')
             set(hprogress,'position',[0 0 ii/Np 0.01])
             set(fh,'name',sprintf('Templatematch %3.0f%%',ii*100/Np));
-            if (cputime-lastdraw)>.3||(cputime<lastdraw)
+            if (cputime-lastdraw)>.3||(cputime<lastdraw)||(ii==Np)
                 set(hscatterA,'cdata',cc);
                 posB=points+dxy;
                 set(hscatterB,'cdata',cc,'xdata',posB(:,[1 1])','ydata',posB(:,[2 2])');
+                zlim([-1.1 .1]) %critical as otherwise matlabs clipping plane will throw out points with z=0 in older versions of matlab. BUG.
                 drawnow
                 lastdraw=cputime;
             end
@@ -216,9 +223,14 @@ end
 
 if ~isempty(showprogress)
     try
-        delete(htext)
-        delete(hprogress)
-        drawnow
+        if islogical(showprogress)
+            progressmsg(:)=8;
+            fprintf('%s',progressmsg);
+        else
+            delete(htext)
+            delete(hprogress)
+            drawnow
+        end
     catch
     end
 end
@@ -277,7 +289,7 @@ if sigmaT~=0
     %sigmaB=sqrt(max(localsum(B.*B,sT)-(lsumB.^2)/numel(T),0));
     %C=(C-lsumB*meanT)./(sigmaT*max(sigmaB,sigmaT/1e5)); %not 100% robust. Uses 1e5 div0 trick from D.Kroon (thanks)
     sigmaB=realsqrt(max(localsum(B.*B,sT)-(lsumB.^2)/numel(T),0)); %is the max really necessary ?
-    C=(C-lsumB*meanT)./(sigmaT*sigmaB); 
+    C=(C-lsumB*meanT)./(sigmaT*sigmaB);
     C(abs(C)>1.1)=0; %this can happen if sigmaB almost 0, but we still allow C<1.1 to accomodate potential rounding issue for perfect correlation.
 else
     C=zeros(sz);
@@ -327,7 +339,7 @@ if size(A,3)<3
 end
 [X,Y]=meshgrid([0.5 size(A,2)+0.5],[0.5 size(A,1)+0.5]);
 surface(X,Y,zeros(size(X))-1,A,'EdgeColor','none','FaceColor','texturemap'); %it is much faster than using an image! (Bizarrely)
-axis off tight equal image ij; 
+axis off tight equal image ij;
 zlim([-1.1 .1]) %critical as otherwise matlabs clipping plane will throw out points with z=0 in older versions of matlab. BUG.
 hold on
 
