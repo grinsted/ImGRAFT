@@ -1,4 +1,5 @@
-![ImGRAFT](http://imgraft.glaciology.net/imgraftlogo.png)
+[![ImGRAFT](http://imgraft.glaciology.net/imgraftlogo.png)](http://imgraft.glaciology.net)
+
 
 ##An image georectification and feature tracking toolbox for MATLAB
 
