@@ -57,8 +57,12 @@ end
 
 dxyo=round(dxyo);
 dxyo(:,end+1)=dxyo(:,end);
-whtemplate(end+1)=whtemplate(end); %should hold [width, height.]
-whsearch(end+1)=whsearch(end);
+if size(whtemplate,2)==1
+    whtemplate(:,2)=whtemplate(:,1); %should hold [width, height.]
+end
+if size(whsearch,2)==1
+    whsearch(:,2)=whsearch(:,1);
+end
 if any(whtemplate>=whsearch)
     error('Search window size must be greater than template size.')
 end
@@ -111,14 +115,14 @@ if ~isempty(showprogress)
     else
         fh=figure;
         set(fh,'name','Templatematch progress','NumberTitle','off','renderer','opengl')
-        hax=axes('pos',[0 0.01 0.5 0.95],'drawmode','fast');
+        hax=axes('pos',[0 0.01 0.5 0.95]);
         showimg(A);
         text(0.5,1,showprogress{1},'units','normalized','vert','bottom','fontname','courier','horiz','center')
         cc=zeros(2,size(points,1));
         hscatterA=mesh(points(:,[1 1])',points(:,[2 2])',zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
         colormap autumn
         caxis([0 1])
-        hax(2)=axes('pos',[0.5 0.01 0.5 0.95],'drawmode','fast');
+        hax(2)=axes('pos',[0.5 0.01 0.5 0.95]);
         showimg(B); hold on
         hscatterB=mesh(points(:,[1 1])'+dxyo(1),points(:,[2 2])'+dxyo(2),zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
         caxis([0 1])
@@ -127,7 +131,6 @@ if ~isempty(showprogress)
         linkaxes(hax,'xy');
         axis image, axis ij, drawnow
         hprogress=annotation(fh,'rectangle',[0 0 0 0.01],'color','none','facecolor','r');
-        set(findobj(gcf,'-property','erasemode'),'erasemode','none')
     end
 end
 lastdraw=cputime;
@@ -175,15 +178,16 @@ for ii=1:Np
     
     
     
-    AA=resizefun(mean(AA,3),super); %TODO: improve edge effects of super sampling. (need 2 extra pixels for cubic)
+    AA=resizefun(mean(AA,3),super); %TODO: improve edge effects of super sampling. (need 2 extra pixels for cubic) 
     BB=resizefun(mean(BB,3),super);
     
     [C,xx,yy]=matchfun(AA,BB);
     [Cmax,mix]=max(C(:));
     [mix(1),mix(2)]=ind2sub(size(C),mix);
     
+    Cout(ii,2)=mean(abs(C(:))); %"noise" correlation level (we can accept that estimate even if we cannot find a good peak.)
+    
     if ~(any(mix==1)||any(mix==size(C))) %do not accept any maxima on the edge of C
-        
         %really simple/fast/crude sub pixel.  TODO: find bicubic interpolation max. (For now just super sample the imge for higher precision.)
         [xx,yy]=meshgrid(xx(mix(2)+(-1:1)),yy(mix(1)+(-1:1)));
         c=C(mix(1)+(-1:1),mix(2)+(-1:1));
@@ -193,17 +197,16 @@ for ii=1:Np
         
         mix=mix([2 1])./super;
         dxy(ii,:)=mix+dxyo(ii,1:2);
-        Cout(ii,:)=[Cmax mean(abs(C(:)))];
+        Cout(ii,1)=Cmax;
     end
     
     if ~isempty(showprogress)
         if islogical(showprogress)
-            if (cputime-lastdraw)>1/15||(cputime<lastdraw)||(ii==Np)
-                progressmsg(:)=8; %8=backspace;
-                fprintf(progressmsg);
-                progressmsg=[uint8((1:20)<((ii/Np)*20)).*'+' ''];
-                progressmsg=sprintf('Template Match [%s]  (%5.1f %+5.1f)',progressmsg,dxy(ii,1),dxy(ii,2));
-                fprintf('%s',progressmsg)
+            if (cputime-lastdraw)>.1||(cputime<lastdraw)||(ii==Np)
+                backspaces=char(zeros(size(progressmsg))+8);
+                progressmsg=[uint8((1:40)<((ii/Np)*40)).*'+' ''];
+                progressmsg=sprintf('Templatematch [%s]  (%5.1f %+5.1f)',progressmsg,dxy(ii,1),dxy(ii,2));
+                fprintf('%s%s',backspaces,progressmsg)
                 drawnow
                 lastdraw=cputime;
             end
@@ -280,7 +283,6 @@ function [C,xx,yy]=myNCC(T,B)
 %
 % Alternative to NCC if no image processing toolbox. Requires single/double input.
 %
-
 sT=size(T); sB=size(B);
 sz=sB+sT-1;
 meanT=sum(T(:))/numel(T);

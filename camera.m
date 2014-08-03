@@ -1,56 +1,57 @@
+%% camera class - a distorted camera model.
+%
+% This class is an implementation of a distorted camera model.
+% Note: Uses <http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html the same distorted camera model as opencv>.
+%
+%
+% camera properties:
+%  imgsz   - size of image in pixels [#rows, #columns]
+%  f       - focal length in pixel units (two element vector [fx,fy])
+%  c       - camera center in pixel coordinates (two element vector: [cx,cy])
+%  k       - radial distortion coefficients. (six element vector: [k1-k6])
+%  p       - tangential distortion coefficients (two element vector: [p1,p2])
+%  xyz     - world coordinates of camera.
+%  viewdir - [yaw,pitch,roll]. Yaw: rotation about z (0=looking east)
+%                              Pitch: look up/down angle
+%                              Roll: camera roll (horizon tilt).
+%
+% camera Dependent/derived properties:
+%  (i.e. properties calculated from the camera parameters)
+%  R         - camera rotation matrix calculated from camera view
+%              direction (read only)
+%  fullmodel - a 20-element vector containing all camera properties.
+%              [camx,camy,camz,imgszy,imgszx,viewdiryaw,viewdirpitch,viewdirroll,fx,fy,cx,cy,k1-6,p1-2]
+%
+% camera Methods:
+%  camera      - constructor
+%  optimizecam - optimize the camera to mimimize misfit between
+%                projected world coordinates and pixel coordinates.
+%  project     - project world coordinates to image coordinates (3d->2d)
+%  invproject  - project image coordinates to world coordinates (2d->3d)
+%
+%
+% ImGRAFT - An image georectification and feature tracking toolbox for MATLAB
+% Copyright (C) 2014 Aslak Grinsted (<www.glaciology.net glaciology.net>)
+
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the "Software"), to deal
+% in the Software without restriction, including without limitation the rights
+% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% copies of the Software, and to permit persons to whom the Software is
+% furnished to do so, subject to the following conditions:
+%
+% The above copyright notice and this permission notice shall be included in
+% all copies or substantial portions of the Software.
+%
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+% THE SOFTWARE.
+
 classdef camera
-    %% camera class - a distorted camera model.
-    %
-    % This class is an implementation of a distorted camera model.
-    % Note: Uses <a href="http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html">the same distorted camera model as opencv</a>.
-    %
-    %
-    % camera properties:
-    %  imgsz   - size of image in pixels [#rows, #columns]
-    %  f       - focal length in pixel units (two element vector [fx,fy])
-    %  c       - camera center in pixel coordinates (two element vector: [cx,cy])
-    %  k       - radial distortion coefficients. (six element vector: [k1-k6])
-    %  p       - tangential distortion coefficients (two element vector: [p1,p2])
-    %  xyz     - world coordinates of camera.
-    %  viewdir - [yaw,pitch,roll]. Yaw: rotation about z (0=looking east)
-    %                              Pitch: look up/down angle
-    %                              Roll: camera roll (horizon tilt).
-    %
-    % camera Dependent/derived properties:
-    %  (i.e. properties calculated from the camera parameters)
-    %  R         - camera rotation matrix calculated from camera view
-    %              direction (read only)
-    %  fullmodel - a 20-element vector containing all camera properties.
-    %              [camx,camy,camz,imgszy,imgszx,viewdiryaw,viewdirpitch,viewdirroll,fx,fy,cx,cy,k1-6,p1-2]
-    %
-    % camera Methods:
-    %  camera      - constructor
-    %  optimizecam - optimize the camera to mimimize misfit between
-    %                projected world coordinates and pixel coordinates.
-    %  project     - project world coordinates to image coordinates (3d->2d)
-    %  invproject  - project image coordinates to world coordinates (2d->3d)
-    %
-    %
-    % ImGRAFT - An image georectification and feature tracking toolbox for MATLAB
-    % Copyright (C) 2014 Aslak Grinsted (<www.glaciology.net glaciology.net>)
-    
-    % Permission is hereby granted, free of charge, to any person obtaining a copy
-    % of this software and associated documentation files (the "Software"), to deal
-    % in the Software without restriction, including without limitation the rights
-    % to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    % copies of the Software, and to permit persons to whom the Software is
-    % furnished to do so, subject to the following conditions:
-    %
-    % The above copyright notice and this permission notice shall be included in
-    % all copies or substantial portions of the Software.
-    %
-    % THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    % IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    % FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    % AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    % LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    % THE SOFTWARE.
     
     properties
         xyz = [0 0 0]; %world coordinates of camera;
