@@ -191,7 +191,8 @@ for ii=1:Np
         %really simple/fast/crude sub pixel.  TODO: find bicubic interpolation max. (For now just super sample the imge for higher precision.)
         [xx,yy]=meshgrid(xx(mix(2)+(-1:1)),yy(mix(1)+(-1:1)));
         c=C(mix(1)+(-1:1),mix(2)+(-1:1));
-        c=(c-min(c(:))).^4;c=c./sum(c(:));
+        c=(c-mean(c(:)));c(c<0)=0; %best performance for landsat test images
+        c=c./sum(c(:)); 
         mix(2)=sum(xx(:).*c(:));
         mix(1)=sum(yy(:).*c(:));
         
