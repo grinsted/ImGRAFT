@@ -164,8 +164,6 @@ end
 for ii=1:Np
     p=points(ii,:);
     
-    
-    
     try
         row=min(ii,size(whsearch,1));
         BB=B(p(2)+dxyo(ii,2)+(-whsearch(row,2):whsearch(row,2)),p(1)+dxyo(ii,1)+(-whsearch(row,1):whsearch(row,1)),:);
@@ -212,7 +210,7 @@ for ii=1:Np
                 lastdraw=cputime;
             end
         else
-            cc(:,ii)=min(nanmax(Cout(ii,1)-Cout(ii,2),0),1);
+            cc(:,ii)=min(max(Cout(ii,1)-Cout(ii,2),0),1);
             set(htext,'string',sprintf('%+5.1f %+5.1f ',dxy(ii,1),dxy(ii,2)))%,'units','normalized','vert','top')
             set(hprogress,'position',[0 0 ii/Np 0.01])
             set(fh,'name',sprintf('Templatematch %3.0f%%',ii*100/Np));
@@ -237,6 +235,7 @@ if ~isempty(showprogress)
         else
             delete(htext)
             delete(hprogress)
+            set(fh,'name','Templatematch: Done')
             drawnow
         end
     catch
