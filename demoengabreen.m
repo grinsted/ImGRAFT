@@ -96,7 +96,9 @@ points=round([pX(:) pY(:)+pX(:)/10]);
 %find 3d coords consistent with the 2d pixel coords in points.
 xyz=camA.invproject(points);
 %the projection of xyz has to match the shifted coords in points+dxy:
-camB=camA.optimizecam(xyz,points+dxy,'00000111000000000000'); %optimize 3 view direction angles to determine camera B. 
+[camB,rmse]=camA.optimizecam(xyz,points+dxy,'00000111000000000000'); %optimize 3 view direction angles to determine camera B. 
+rmse
+
 
 %quantify the shift between A and B in terms of an angle. 
 DeltaViewDirection=(camB.viewdir-camA.viewdir)*180/pi 
@@ -166,8 +168,7 @@ plot(camA.xyz(1),camA.xyz(2),'r+')
 %% Generate a set of points to be tracked between images
 %
 % # Generate a regular grid of candidate points in world coordinates.
-% # Cull the set of candidate points to those that are visible and
-% glaciated 
+% # Cull the set of candidate points to those that are visible and glaciated 
 %
 %
 
@@ -208,7 +209,7 @@ V=(xyzB-xyzA)./(tB-tA); % 3d velocity.
 
 %plot candidate points on map view
 figure;
-image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014+)
+image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014b)
 axis equal xy off tight
 hold on
 Vn=sqrt(sum(V(:,1:2).^2,2));
@@ -223,7 +224,12 @@ title('Velocity in metres per day')
 
 
 
-%project velocity onto downhill slope direction
+%Project velocity onto downhill slope direction
+%----
+%The largest error in the velocities will along the view direction vector.
+%By projecting to the slope direction we strongly suppress errors arising
+%from this. 
+
 
 [gradX,gradY]=gradient(dem.smoothed,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
 gradN=sqrt(gradX.^2+gradY.^2);
@@ -234,12 +240,13 @@ Vgn=V(:,1).*gradX+V(:,2).*gradY;
 Vg=[Vgn.*gradX Vgn.*gradY];
 
 
+close all
 figure
-image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014+
+image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014b
 axis equal xy off tight
 
 hold on
-scatter(xyzA(keep,1),xyzA(keep,2),100,Vgn(keep),'.')
+scatter(xyzA(keep,1),xyzA(keep,2),300,Vgn(keep),'.')
 quiver(xyzA(keep,1),xyzA(keep,2),Vg(keep,1)./Vgn(keep),Vg(keep,2)./Vgn(keep),.2,'k')
 quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,'k','color',[.5 .5 .5])
 

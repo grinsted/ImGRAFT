@@ -255,7 +255,7 @@ classdef camera
                     X=fliplr(X);Y=fliplr(Y);Z=fliplr(Z);
                 end
                 
-                if exists('griddedInterpolant','file')>1
+                if exist('griddedInterpolant','file')>1
                     zfun=griddedInterpolant(X',Y',Z'); %TODO: improve robustness.
                 else
                     %fallback for older versions of matlab. slower

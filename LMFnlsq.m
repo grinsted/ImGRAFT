@@ -1,7 +1,6 @@
 function [xf, SS, cnt, res, XY] = LMFnlsq(varargin)
-% LMFNLSQ   Solve one or a set of (over)determined nonlinear equations
-% in the least squares sense
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% LMFNLSQ   Solve one or a set of (over)determined nonlinear equations in the least squares sense
+% 
 % A solution is obtained by a Fletcher's version of the Levenberg-Maquardt
 % algoritm for minimization of a sum of squares of equation residuals.
 % The main domain of LMFnlsq applications is in curve fitting during

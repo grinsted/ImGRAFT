@@ -19,6 +19,8 @@ gcpA=load(fullfile(datafolder,'GCPortho6_4dot5Mpx.txt'));
 [x,y]=pixcenters(R,size(dem));
 [X,Y]=meshgrid(x,y);
 
+
+
 %camera location as given in practise:
 camxyz=[649299.97, 5253358.26]; 
 camxyz(3)=interp2(X,Y,dem,camxyz(1),camxyz(2),'spline')+1.5; 
