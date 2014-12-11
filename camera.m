@@ -324,7 +324,7 @@ classdef camera
             newcam=@(m)camera( fullmodel0 + sparse(ones(1,Nfree),paramix,m,1,length(fullmodel0)) );
             
             if size(uv,2)==3
-                misfit=@(m)reshape((project(newcam(m),xyz)-uv).*uv(:,[3 3]),[],1);%weighted least squares
+                misfit=@(m)reshape((project(newcam(m),xyz)-uv(:,1:2)).*uv(:,[3 3]),[],1);%weighted least squares
             else
                 misfit=@(m)reshape(project(newcam(m),xyz)-uv,[],1);
             end
