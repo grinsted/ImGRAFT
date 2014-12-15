@@ -15,8 +15,12 @@
 datafolder=downloadDemoData('practise');
 A=imread(fullfile(datafolder,'ufs20110511_0815_4dot5Mpx.jpg'));
 gcpA=load(fullfile(datafolder,'GCPortho6_4dot5Mpx.txt'));
-[dem,R]=arcgridread(fullfile(datafolder,'dem_30m.txt'));
-[x,y]=pixcenters(R,size(dem));
+
+%We load the DEM as a matfile to avoid mapping-toolbox dependency. 
+load(fullfile(datafolder,'dem30m.mat'));
+%[dem,R]=arcgridread(fullfile(datafolder,'dem_30m.txt'));
+%[x,y]=pixcenters(R,size(dem));
+
 [X,Y]=meshgrid(x,y);
 
 
