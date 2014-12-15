@@ -9,12 +9,20 @@
 % geo-tiffs.
 
 datafolder=downloadDemoData('cias');
-[A,Ia]=geotiffread(fullfile(datafolder,'batura_2001.tif'));
-[B,Ib]=geotiffread(fullfile(datafolder,'batura_2002.tif'));
-[x,y]=pixcenters(Ia,size(A));
-dx=abs(x(2)-x(1));%m/pixel
 
-%regular grid of points to track:
+%%load data
+%
+%Here we use imread instead of geotiffread (to avoid mapping toolbox
+%dependency)
+
+A=imread(fullfile(datafolder,'batura_2001.tif')); 
+B=imread(fullfile(datafolder,'batura_2002.tif')); %normally you would use geotiffread
+x=(0:size(A,2)-1)*15+451357.50; %if you have mapping toolbox then use pixcenters here. 
+y=(0:size(A,1)-1)*15+4060432.50;
+dx=15;%m/pixel
+
+
+%make regular grid of points to track:
 [pu,pv]=meshgrid(1:20:size(A,2),1:20:size(A,1));
 
 %... but restricted to points inside this region of interest polygon
