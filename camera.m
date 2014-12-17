@@ -215,9 +215,11 @@ classdef camera
                 if any(cam.k~=0)||any(cam.p~=0)
                     E=[1 0 0;0 1 0]*cam.R; % perturb in these directions.
                     for ii=1:size(uv,1)
-                        nxyz=@(m)xyz(ii,:)+m*E;
-                        misfit=@(m)sum((cam.project(nxyz(m))-uv(ii,:)).^2);
-                        m=fminsearch(misfit,[0 0]);
+                        nxyz=@(m)xyz(ii,:)+m'*E;
+                        %misfit=@(m)sum((cam.project(nxyz(m))-uv(ii,:)).^2);
+                        %m=fminsearch(misfit,[0 0]); %THIS REQUIRES A TOOLBOX!!!
+                        misfitlm=@(m)(cam.project(nxyz(m))-uv(ii,:))'.^2;
+                        m=LMFnlsq(misfitlm,[0;0]);
                         xyz(ii,:)=nxyz(m);
                     end
                 end
@@ -262,11 +264,13 @@ classdef camera
                     zfun=@(x,y)interp2(X,Y,Z,x,y);
                 end
                 for ii=1:length(uv)
-                    misfit=@(xy)sum((cam.project([xy zfun(xy(1),xy(2))])-uv(ii,1:2)).^2);
+                    %misfit=@(xy)sum((cam.project([xy zfun(xy(1),xy(2))])-uv(ii,1:2)).^2);
+                    misfitlm=@(xy)(cam.project([xy(:)' zfun(xy(1),xy(2))])-uv(ii,1:2))'.^2;
                     try
-                        [xyz(ii,1:2),err]=fminunc(misfit,xy0(ii,1:2),optimset('LargeScale','off','Display','off','TolFun',0.001));
+                        %[xyz(ii,1:2),err]=fminunc(misfit,xy0(ii,1:2),optimset('LargeScale','off','Display','off','TolFun',0.001)); %TODO: remove dependency. can i use LMFnlsq?
+                        xyz(ii,1:2)=LMFnlsq(misfitlm,xy0(ii,1:2));
                         xyz(ii,3)=zfun(xyz(ii,1),xyz(ii,2));
-                        if err>2^2
+                        if sum(misfitlm(xyz(ii,1:2)))>2^2
                             xyz(ii,:)=nan; %do not accept greater than 2 pixel error.
                         end
                     catch
