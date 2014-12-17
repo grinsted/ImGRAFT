@@ -310,9 +310,16 @@ yy=-wkeep(1):wkeep(1);
 
 function lsum=localsum(A,sz)
 %Fast local sum of A. Local being within the a footprint of size sz
-A = cumsum(padarray(A,sz),2);
+% A = cumsum(padarray(A,sz),2);
+% A = cumsum(A(:,1+sz(2):end-1)-A(:,1:end-sz(2)-1),1);
+% lsum= A(1+sz(1):end-1,:)-A(1:end-sz(1)-1,:);
+zp=zeros(size(A,1),sz(2)); %thanks to Matthew for spotting padarray dependency. opportunity to optimize further.
+A = cumsum([zp,A,zp],2);
+zp=zeros(sz(1),size(A,2));
+A=[zp;A;zp];
 A = cumsum(A(:,1+sz(2):end-1)-A(:,1:end-sz(2)-1),1);
 lsum= A(1+sz(1):end-1,:)-A(1:end-sz(1)-1,:);
+
 
 function A=im2float(A)
 %im2double etc only available in image processing toolbox. this is a workaround.
