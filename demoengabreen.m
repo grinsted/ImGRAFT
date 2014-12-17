@@ -80,14 +80,14 @@ title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 %First get an approximate estimate of the image shift using a single large
 %template
 points=[3000, 995];
-xyo=templatematch(A,B,points,200,260,0.5,[0 0],false,'PC') %Note PC=PhaseCorrelation is still experimental. 
+xyoffset=templatematch(A,B,points,200,260,0.5,[0 0],false,'PC') %Note PC=PhaseCorrelation is still experimental. 
 
 %Get a whole bunch of image shift estimates using a grid of probe points.
 %Having multiple shift estimates will allow us to determine camera
 %rotation.
 [pX,pY]=meshgrid(200:700:4000,100:400:1000);
 points=round([pX(:) pY(:)+pX(:)/10]); 
-[dxy,C]=templatematch(A,B,points,30,40,3,xyo,[idA idB]);
+[dxy,C]=templatematch(A,B,points,30,40,3,xyoffset,[idA idB]);
 
 
 %Determine camera rotation between A and B from the set of image
@@ -117,8 +117,8 @@ DeltaViewDirection=(camB.viewdir-camA.viewdir)*180/pi
 %Apply a local averaging smooth to the DEM:
 %large crevasses are ~40m wide. The filter has to be wide enough to bridge
 %crevasses.
-sigma=10; %dem-pixels 
-fgauss=exp(-.5*((-sigma*1.5:sigma*1.5)/sigma).^2); %a gaussian filter.
+sig=10; % standard deviation / spatial width of filter
+fgauss=exp(-.5*((-sig*1.5:sig*1.5)/sig).^2); %a gaussian filter.
 fgauss=fgauss'*fgauss; %2d-gaussian. You can use fspecial('gaussian',...) if you have the image processing toolbox
 dem.smoothed=filter2(fgauss/sum(fgauss(:)),dem.Z); %imfilter with replicate same is better at edges. 
 
@@ -151,7 +151,7 @@ dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
 %show the viewshed by shading the dem.rgb image.
 figure
 title('Viewshed of DEM (i.e. potentially visible from camera location)')
-image(dem.x,dem.y,bsxfun(@times,im2double(dem.rgb),(0.3+0.7*dem.visible)))
+image(dem.x,dem.y,bsxfun(@times,double(dem.rgb)/255,(0.3+0.7*dem.visible)))
 axis equal xy off
 hold on
 plot(camA.xyz(1),camA.xyz(2),'r+')
