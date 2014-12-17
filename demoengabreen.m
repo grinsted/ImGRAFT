@@ -80,7 +80,7 @@ title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 %First get an approximate estimate of the image shift using a single large
 %template
 points=[3000, 995];
-xyo=templatematch(A,B,points,200,260,0.5,[0 0],false,'PC') 
+xyo=templatematch(A,B,points,200,260,0.5,[0 0],false,'PC') %Note PC=PhaseCorrelation is still experimental. 
 
 %Get a whole bunch of image shift estimates using a grid of probe points.
 %Having multiple shift estimates will allow us to determine camera
@@ -114,31 +114,22 @@ DeltaViewDirection=(camB.viewdir-camA.viewdir)*180/pi
 % when mapping feature pixel coordinates to world coordinates. 
 %
 
-% first pick a 2d-filtering routine depending on whether the image processing
-% toolbox is present. 
-if exist('imfilter','file')>1
-    filterfun=@(f,A)imfilter(A,f,'replicate','same'); %this treats edges better.
-else
-    filterfun=@(f,A)filter2(f,A); 
-end
-
-
 %Apply a local averaging smooth to the DEM:
 %large crevasses are ~40m wide. The filter has to be wide enough to bridge
 %crevasses.
 sigma=10; %dem-pixels 
-fs=fspecial('gaussian',[3 3]*sigma,sigma);
-dem.smoothed=filterfun(fs,dem.Z);
+fgauss=exp(-.5*((-sigma*1.5:sigma*1.5)/sigma).^2); %a gaussian filter.
+fgauss=fgauss'*fgauss; %2d-gaussian. You can use fspecial('gaussian',...) if you have the image processing toolbox
+dem.smoothed=filter2(fgauss/sum(fgauss(:)),dem.Z); %imfilter with replicate same is better at edges. 
 
 % Apply an extreme weighting local smooth to the deviation between the
 % sZ and Zmask (extract tops of crevasses):
-fs=fspecial('disk',round(sigma*1));
+fdisk=fgauss>exp(-.5); %alternatively use fspecial('disk',round(sigma)); instead
 extremeweight=1.1;
-dem.filled=log(filterfun(fs,exp((dem.Z-dem.smoothed)*extremeweight)))/extremeweight;
+dem.filled=log(filter2(fdisk/sum(fdisk(:)),exp((dem.Z-dem.smoothed)*extremeweight)))/extremeweight;
 
 %apply a post-smoothing to the jagged crevasse tops.
-fs=fspecial('gaussian',[3 3]*sigma,sigma);%fs=fs/sum(fs(:));%
-dem.filled=filterfun(fs,dem.filled);
+dem.filled=filter2(fgauss/sum(fgauss(:)),dem.filled);
 dem.filled=dem.filled+dem.smoothed;
 
 %Add back non-glaciated areas to the crevasse filled surface. 
@@ -174,13 +165,13 @@ plot(camA.xyz(1),camA.xyz(2),'r+')
 
 [X,Y]=meshgrid(min(dem.x):50:max(dem.x),min(dem.y):50:max(dem.y));%make a 50m grid
 keepers=double(dem.visible&dem.mask); %visible & glaciated dem points 
-keepers=filter2(fspecial('disk',11),keepers); %throw away points close to the edge of visibility 
+keepers=filter2(ones(11)/(11^2),keepers); %throw away points close to the edge of visibility 
 keepers=interp2(dem.X,dem.Y,keepers,X(:),Y(:))>.99; %which candidate points fullfill the criteria.
 xyzA=[X(keepers) Y(keepers) interp2(dem.X,dem.Y,dem.filled,X(keepers),Y(keepers))];
 [uvA,~,inframe]=camA.project(xyzA); %where would the candidate points be in image A
 xyzA=xyzA(inframe,:); %cull points outside the camera field of view.
 uvA=round(uvA(inframe,:)); %round because template match only works with integer pixel coords
-uvA(end+1,:)=[2275 1342]; %add a non-glaciated point to test for residual camera movement (tunnel)
+uvA(end+1,:)=[2275 1342]; %add a non-glaciated point to test for residual camera movement (here a tunnel entrance)
 %Note xyzA no longer corresponds exactly to uvA because of the rounding.
 
 
@@ -195,7 +186,7 @@ wsearch=40;
 wtemplate=10;
 super=5; %supersample the input images
 
-[dxy,C]=templatematch(A,B,uvA,wtemplate,wsearch,super,camshake,showprogress,'myNCC'); %myNCC is faster than NCC in my tests
+[dxy,C]=templatematch(A,B,uvA,wtemplate,wsearch,super,camshake,showprogress); %myNCC is faster than NCC in my tests
 
 uvB=uvA+dxy;
 signal2noise=C(:,1)./C(:,2);
@@ -203,13 +194,13 @@ signal2noise=C(:,1)./C(:,2);
 %% Georeference tracked points
 % ... and calculate velocities
 xyzA=camA.invproject(uvA,dem.X,dem.Y,dem.filled); %has to be recalculated because uvA has been rounded.
-xyzB=camB.invproject(uvB,dem.X,dem.Y,dem.filled-dem.mask*22.75*(tB-tA)/365); %impose a thinning of the DEM of 20m/yr between images.
+xyzB=camB.invproject(uvB,dem.X,dem.Y,dem.filled-dem.mask*22.75*(tB-tA)/365); %impose a thinning of the DEM of 23m/yr between images.
 V=(xyzB-xyzA)./(tB-tA); % 3d velocity.
 
 
 %plot candidate points on map view
 figure;
-image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014b)
+image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014b.
 axis equal xy off tight
 hold on
 Vn=sqrt(sum(V(:,1:2).^2,2));

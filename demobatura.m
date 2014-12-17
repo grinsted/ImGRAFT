@@ -36,7 +36,7 @@ uvA=[pu(ix) pv(ix)]; %these are the points we want to track.
 whtemplate=10; %template/chip size
 whsearch=30; %search window size
 super=1; %No super sampling 
-[dxy,C]=templatematch(A,B,uvA,whtemplate,whsearch,super,[0 0],{'2001' '2002'},'myncc');
+[dxy,C]=templatematch(A,B,uvA,whtemplate,whsearch,super,[0 0],{'2001' '2002'});
 close all
 
 %visualize the results

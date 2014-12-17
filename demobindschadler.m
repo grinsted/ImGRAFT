@@ -20,7 +20,7 @@ uvA=[pu(:) pv(:)]; %these are the points we want to track.
 whtemplate=10; %template size half-width
 whsearch=30;   %search template half-width
 super=1;
-[dxy,C]=templatematch(A,B,uvA,whtemplate,whsearch,super,[0 0],true,'myncc');
+[dxy,C]=templatematch(A,B,uvA,whtemplate,whsearch,super,[0 0],true);
 
 close all
 image(repmat(A,[1 1 3]),'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014+)

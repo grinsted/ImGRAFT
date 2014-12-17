@@ -76,15 +76,15 @@ Cout=nan(Np,2);
 
 
 switch upper(method)
-    case 'NCC'
+    case 'NORMXCORR2'
         if exist('normxcorr2','file')>1
-            matchfun=@NCC; %TODO: use myNCC if float inputs? which is faster?
+            matchfun=@matNCC; %TODO: use myNCC if float inputs? which is faster?
         else
             if ~isfloat(A),A=im2float(A); end
             if ~isfloat(B),B=im2float(B); end
             matchfun=@myNCC;
         end
-    case 'MYNCC'
+    case {'MYNCC' 'NCC'}
         if ~isfloat(A),A=im2float(A); end
         if ~isfloat(B),B=im2float(B); end
         matchfun=@myNCC;
@@ -245,10 +245,11 @@ end
 function [result,xx,yy]=phasecorr2(T,I)
 %
 %TODO-test: apply band-pass - (to remove supersampled high freqs, and
-%low-passed to remove long wavelength effects.
+%low-passed to remove long wavelength effects (edges).
 sA=size(T);sB=size(I);
 sz=sA+sB-1;
-ham=@(A)bsxfun(@times,bsxfun(@times,(A-mean(A(:))),hamming(size(A,1))),hamming(size(A,2))');
+myhamming=@(m)0.54 - 0.46 * cos (2 * pi * (0:m-1)' / (m-1));
+ham=@(A)bsxfun(@times,bsxfun(@times,(A-mean(A(:))),myhamming(size(A,1))),myhamming(size(A,2))');
 FA = conj(fft2(ham(T),sz(1),sz(2))); %2d FFT
 FB = fft2(ham(I),sz(1),sz(2));
 FAB = FA.*FB;
@@ -263,7 +264,7 @@ rows=mod(yy+c(1)-1,sz(1))+1;
 cols=mod(xx+c(2)-1,sz(2))+1;
 result=result(rows,cols);
 
-function [C,xx,yy]=NCC(T,B)
+function [C,xx,yy]=matNCC(T,B)
 sT = size(T); sB = size(B);
 outsize = sB + sT-1;
 try
