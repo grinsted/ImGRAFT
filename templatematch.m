@@ -153,7 +153,7 @@ else
             super=1./dwn;
             skipperfun=@(A,super)A(ceil(.5*dwn):dwn:end,floor(.5/super):dwn:end);
             %resizefun=@(A,super)skipperfun(filter2(fspecial('gaussian',[0 0]+round(2./super),1./super)),A);
-            resizefun=@(A,super)skipperfun(filter2(fspecial('average',1./super)),A);
+            resizefun=@(A,super)skipperfun(filter2(ones(dwn)/dwn^2,A),super);
             
             %implement reshape based stacker for speed.
         end
