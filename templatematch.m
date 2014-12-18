@@ -138,13 +138,13 @@ lastdraw=cputime;
 if super==1
     resizefun=@(A,super)A;
 else
-    if (exist('imresize','file')>1)%&&false
+    if (exist('imresize','file')>1)
         %use imresize if it is available. (requires image processing toolbox)
         resizefun=@(A,super)imresize(A,super);
     else
         if super>1
             super=2.^round(log2(super));
-            resizefun=@(A,super)interp2(A,log2(super)+1);
+            resizefun=@(A,super)interp2(A,log2(super));
         else
             %         warning('image downsampling fallback for no image processing toolbox not implemented yet');
             %         resizefun=@(A,super)A;
