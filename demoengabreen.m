@@ -79,24 +79,23 @@ title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 
 %First get an approximate estimate of the image shift using a single large
 %template
-points=[3000, 995];
-xyoffset=templatematch(A,B,points,200,260,0.5,[0 0],false,'PC') %Note PC=PhaseCorrelation is still experimental. 
+[duoffset,dvoffset]=templatematch(A,B,3000,995,'templatewidth',261,'searchwidth',400,'supersample',0.5,'showprogress',false,'method','PC') %Note PC=PhaseCorrelation is still experimental. 
 
 %Get a whole bunch of image shift estimates using a grid of probe points.
 %Having multiple shift estimates will allow us to determine camera
 %rotation.
-[pX,pY]=meshgrid(200:700:4000,100:400:1000);
-points=round([pX(:) pY(:)+pX(:)/10]); 
-[dxy,C]=templatematch(A,B,points,30,40,3,xyoffset,[idA idB]);
+[pu,pv]=meshgrid(200:700:4000,100:400:1000);
+pu=pu(:); pv=pv(:)+pu/10; 
+[du,dv,C]=templatematch(A,B,pu,pv,'templatewidth',61,'searchwidth',81,'supersample',3,'initialdu',duoffset,'initialdv',dvoffset,'showprogress',[idA idB]);
 
 
 %Determine camera rotation between A and B from the set of image
 %shifts.
 
 %find 3d coords consistent with the 2d pixel coords in points.
-xyz=camA.invproject(points);
+xyz=camA.invproject([pu pv]);
 %the projection of xyz has to match the shifted coords in points+dxy:
-[camB,rmse]=camA.optimizecam(xyz,points+dxy,'00000111000000000000'); %optimize 3 view direction angles to determine camera B. 
+[camB,rmse]=camA.optimizecam(xyz,[pu+du pv+dv],'00000111000000000000'); %optimize 3 view direction angles to determine camera B. 
 rmse
 
 
@@ -170,7 +169,7 @@ keepers=interp2(dem.X,dem.Y,keepers,X(:),Y(:))>.99; %which candidate points full
 xyzA=[X(keepers) Y(keepers) interp2(dem.X,dem.Y,dem.filled,X(keepers),Y(keepers))];
 [uvA,~,inframe]=camA.project(xyzA); %where would the candidate points be in image A
 xyzA=xyzA(inframe,:); %cull points outside the camera field of view.
-uvA=round(uvA(inframe,:)); %round because template match only works with integer pixel coords
+uvA=uvA(inframe,:); %round because template match only works with integer pixel coords
 uvA(end+1,:)=[2275 1342]; %add a non-glaciated point to test for residual camera movement (here a tunnel entrance)
 %Note xyzA no longer corresponds exactly to uvA because of the rounding.
 
@@ -181,15 +180,21 @@ uvA(end+1,:)=[2275 1342]; %add a non-glaciated point to test for residual camera
 % ( i.e. accounting only for camera shake)
 camshake=camB.project(camA.invproject(uvA))-uvA;
 
-showprogress=[idA idB];
-wsearch=40; 
-wtemplate=10;
-super=5; %supersample the input images
+options=[];
+options.pu=uvA(:,1);
+options.pv=uvA(:,2);
+options.showprogress=[idA idB];
+options.searchwidth=81; 
+options.templatewidth=21;
+options.supersample=5; %supersample the input images
+options.initialdu=camshake(:,1);
+options.initialdv=camshake(:,2);
 
-[dxy,C]=templatematch(A,B,uvA,wtemplate,wsearch,super,camshake,showprogress); %myNCC is faster than NCC in my tests
+[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,options); 
+uvA=[pu pv]; %the centers of the templates may have been rounded to nearest pixel. 
 
-uvB=uvA+dxy;
-signal2noise=C(:,1)./C(:,2);
+uvB=uvA+[du dv];
+signal2noise=C./Cnoise;
 
 %% Georeference tracked points
 % ... and calculate velocities
@@ -204,7 +209,7 @@ image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workar
 axis equal xy off tight
 hold on
 Vn=sqrt(sum(V(:,1:2).^2,2));
-keep=signal2noise>2&C(:,1)>.7;
+keep=signal2noise>2&C>.7;
 scatter(xyzA(keep,1),xyzA(keep,2),100,Vn(keep),'.')
 quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,'k')
 caxis([0 1])

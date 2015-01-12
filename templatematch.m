@@ -1,36 +1,46 @@
-function [dxy,Cout]=templatematch(A,B,points,whtemplate,whsearch,super,dxyo,showprogress,method)
-% Feature tracking by template matching
+function [du, dv, peakCorr, meanAbsCorr,pu,pv]=templatematch(A,B,varargin)
+%% Feature tracking by template matching
 %
-% [dxy,C]=templatematch(A,B,points,whtemplate,whsearch,[super,dxyo,showprogress,method])
+% 
+%
+% SYNTAX:
+%    [du, dv, peakCorr, meanAbsCorr, pu, pv] = templatematch(A,B[,pu,pv][,parameter-value-pairs])
 %
 % INPUTS
 %    A,B: images
-%    points: xy coordinates in A that should be located in B
-%    whtemplate: half-[width,height] of template in A
-%    whsearch: half-[width,height] of search region in B
+%    pu,pv: pixel coordinates in A that should be located in B. (Default is a regular grid)
+%
+%
+% NAMED PARAMETERS: 
+%    TemplateWidth,TemplateHeight: Size of templates in A (Default: 21).
+%    SearchWidth,SearchHeight: Size of search region in B (Default: TemplateWidth+40).
+%    SuperSample: super sampling factor of input images for improved subpixel accuracy. (default=1)
+%    Initialdu,Initialdv: initial guess of the displacement between A & B
 %    super: supersampling factor (input to imresize)
-%    dxyo: initial guess for x,y displacement.
-%    showprogress: Boolean or cell-array of strings.
-%    method: 'NCC', 'myNCC' or 'PC' (normalized cross correlation or phase correlation)
+%    ShowProgress: Boolean or cell-array of strings.
+%                  true (default) is used for a text progress bar.
+%                  A cell of strings is used to name the A & B images in a progress figure.
+%    Method: 'NCC'(default), 'NORMXCORR2' or 'PC' (normalized cross correlation or phase correlation)
 %
-% Outputs:
-%   dxy: displacement. [A(x,y) has moved to B(x+dx,y+dy)]
-%   C: [peak-correlation,mean-abs-correlation]. (Ratio can be considered a signal to noise ratio)
+% OUTPUTS:
+%   du,dv: displacement of each point in pu,pv. [A(pu,pv) has moved to B(pu+du,pv+dv)]
+%   peakCorr: correlation coefficient of the matched template. 
+%   meanAbsCorr: The mean absolute correlation coefficitent over the search
+%                region is an estimate of the noise level.
+%   pu,pv: actual pixel centers of templates in A may differ from inputs because of rounding. 
 %
-% Methods: NCC and MyNCC are equivalent. NCC uses matlabs normxcorr2 if available
-%          whereas MyNCC uses our own implementation (faster in most cases).
 %
 % ImGRAFT - An image georectification and feature tracking toolbox for MATLAB
-% Copyright (C) 2014 Aslak Grinsted (www.glaciology.net)
+% Copvright (C) 2014 Aslak Grinsted (www.glaciology.net)
 
-% Permission is hereby granted, free of charge, to any person obtaining a copy
+% Permission is hereby granted, free of charge, to any person obtaining a copv
 % of this software and associated documentation files (the "Software"), to deal
 % in the Software without restriction, including without limitation the rights
-% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% to use, copv, modify, merge, publish, distribute, sublicense, and/or sell
 % copies of the Software, and to permit persons to whom the Software is
 % furnished to do so, subject to the following conditions:
 %
-% The above copyright notice and this permission notice shall be included in
+% The above copvright notice and this permission notice shall be included in
 % all copies or substantial portions of the Software.
 %
 % THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -41,41 +51,72 @@ function [dxy,Cout]=templatematch(A,B,points,whtemplate,whsearch,super,dxyo,show
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
+%templatematch(A,B,pu,pv,whtemplate,whsearch,super,duo,dvo,ShowProgress,Method)
+%              1 2 3  4   5            6       7   8    9   10           11
 
-if nargin<6
-    super=1;
-end
-if nargin<7
-    dxyo=[0 0];
-end
-if nargin<8
-    showprogress=false;
-end
-if nargin<9
-    method='NCC';
+p=inputParser;
+p.FunctionName='templatematch';
+p.PartialMatching=true;
+p.StructExpand=true;
+p.CaseSensitive=false;
+p.addOptional('pu',[],@isnumeric);
+p.addOptional('pv',[],@isnumeric);
+p.addParameter('TemplateWidth',21,@isnumeric); 
+p.addParameter('TemplateHeight',[],@isnumeric);
+p.addParameter('SearchWidth',[],@isnumeric);
+p.addParameter('SearchHeight',[],@isnumeric);
+p.addParameter('Initialdu',0,@isnumeric);
+p.addParameter('Initialdv',0,@isnumeric);
+p.addParameter('ShowProgress',true); 
+p.addParameter('Method','NCC',@ischar);
+p.addParameter('SuperSample',1);
+
+p.parse(varargin{:});
+R=p.Results;
+
+if all(size(R.pu))~=all(size(R.pv))
+    error('imgraft:inputerror', 'pu and pv must be same size.');
 end
 
-dxyo=round(dxyo);
-dxyo(:,end+1)=dxyo(:,end);
-if size(whtemplate,2)==1
-    whtemplate(:,2)=whtemplate(:,1); %should hold [width, height.]
-end
-if size(whsearch,2)==1
-    whsearch(:,2)=whsearch(:,1);
-end
-if any(whtemplate>=whsearch)
-    error('Search window size must be greater than template size.')
+if isempty(R.TemplateHeight), R.TemplateHeight=R.TemplateWidth; end;
+if isempty(R.SearchWidth), R.SearchWidth = R.TemplateWidth+40; end;
+if isempty(R.SearchHeight), R.SearchHeight = R.SearchWidth; end;
+
+if isempty(R.pu)
+    [R.pu,R.pv]=meshgrid(R.SearchWidth/2:R.TemplateWidth(1)/2:size(A,2)-R.SearchWidth/2,R.SearchHeight/2:R.TemplateHeight(1)/2:size(A,1)-R.SearchHeight/2);
 end
 
-Np=size(points,1);
-if size(dxyo,1)==1
-    dxyo(1:Np,:)=repmat(dxyo(1,:),Np,1);
+%TODO: make better dimension checking!
+if ((numel(R.Initialdu)>1) || (numel(R.Initialdv)>1)) && ((numel(R.Initialdu)~=numel(R.pu)) || (numel(R.Initialdv)~=numel(R.pv))) 
+    error('imgraft:inputerror', 'size of Initialdu and Initialdv must match pu and pv');
 end
-dxy=nan(Np,2);
-Cout=nan(Np,2);
+if ((numel(R.TemplateWidth)>1) || (numel(R.TemplateHeight)>1)) && ((numel(R.TemplateWidth)~=numel(R.pu)) || (numel(R.TemplateHeight)~=numel(R.pv))) 
+    error('imgraft:inputerror', 'number of elements in TemplateWidth/height must match pu and pv');
+end
+if ((numel(R.SearchWidth)>1) || (numel(R.SearchHeight)>1)) && ((numel(R.SearchWidth)~=numel(R.pu)) || (numel(R.SearchHeight)~=numel(R.pv))) 
+    error('imgraft:inputerror', 'number of elements in SearchWidth/height must match pu and pv');
+end
 
 
-switch upper(method)
+R.Initialdu=round(R.Initialdu);
+R.Initialdv=round(R.Initialdv);
+
+if any(R.TemplateWidth>=R.SearchWidth)||any(R.TemplateHeight>=R.SearchHeight)
+    error('imgraft:inputerror','Search window size must be greater than template size.')
+end
+
+Np=numel(R.pu);
+
+
+du=nan(size(R.pu));
+dv=nan(size(R.pu));
+peakCorr=nan(size(R.pu));
+meanAbsCorr=nan(size(R.pu));
+pu=R.pu;
+pv=R.pv;
+
+
+switch upper(R.Method)
     case 'NORMXCORR2'
         if exist('normxcorr2','file')>1
             matchfun=@matNCC; %TODO: use myNCC if float inputs? which is faster?
@@ -91,43 +132,44 @@ switch upper(method)
     case 'PC'
         matchfun=@phasecorr2;
     otherwise
-        error('unknown method')
+        error('imgraft:inputerror','unknown Method: %s',R.Method)
 end
 
-if islogical(showprogress)
-    if ~showprogress
-        showprogress=[];
+if islogical(R.ShowProgress)
+    if ~R.ShowProgress
+        R.ShowProgress=[];
     end
 else
-    if ~iscell(showprogress)
-        if isnumeric(showprogress)
-            showprogress=arrayfun(@num2str,showprogress,'uniformoutput',false);
+    if ~iscell(R.ShowProgress)
+        if isnumeric(R.ShowProgress)
+            R.ShowProgress=arrayfun(@num2str,R.ShowProgress,'uniformoutput',false);
         else
-            showprogress=num2cell(showprogress);
+            R.ShowProgress=num2cell(R.ShowProgress);
         end
     end
 end
 
 %INITIALIZE PROGRESS FIGURE....
-if ~isempty(showprogress)
-    if islogical(showprogress)
+if ~isempty(R.ShowProgress)
+    if islogical(R.ShowProgress)
         progressmsg='';
     else
         fh=figure;
         set(fh,'name','Templatematch progress','NumberTitle','off','renderer','opengl')
         hax=axes('pos',[0 0.01 0.5 0.95]);
         showimg(A);
-        text(0.5,1,showprogress{1},'units','normalized','vert','bottom','fontname','courier','horiz','center')
-        cc=zeros(2,size(points,1));
-        hscatterA=mesh(points(:,[1 1])',points(:,[2 2])',zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
+        text(0.5,1,R.ShowProgress{1},'units','normalized','vert','bottom','fontname','courier','horiz','center')
+        cc=zeros(2,Np);
+        hscatterA=mesh([R.pu(:) R.pu(:)]',[R.pv(:) R.pv(:)]',zeros(2,Np),'mesh','column','marker','.','markersize',7,'cdata',cc); %bizarrely much faster than scatter
         colormap autumn
         caxis([0 1])
         hax(2)=axes('pos',[0.5 0.01 0.5 0.95]);
         showimg(B); hold on
-        hscatterB=mesh(points(:,[1 1])'+dxyo(1),points(:,[2 2])'+dxyo(2),zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
+        hscatterB=copyobj(hscatterA,gca);
+        %hscatterB=mesh(points(:,[1 1])'+duyo(1),points(:,[2 2])'+duyo(2),zeros(2,size(points,1)),'mesh','column','marker','.','markersize',5,'cdata',cc); %bizarrely much faster than scatter
         caxis([0 1])
         htext=text(1,1,'','units','normalized','vert','bottom','fontname','courier','horiz','right');
-        text(0.5,1,showprogress{end},'units','normalized','vert','bottom','fontname','courier','horiz','center')
+        text(0.5,1,R.ShowProgress{end},'units','normalized','vert','bottom','fontname','courier','horiz','center')
         linkaxes(hax,'xy');
         axis image, axis ij, drawnow
         hprogress=annotation(fh,'rectangle',[0 0 0 0.01],'color','none','facecolor','r');
@@ -135,22 +177,22 @@ if ~isempty(showprogress)
 end
 lastdraw=cputime;
 
-if super==1
+if R.SuperSample==1
     resizefun=@(A,super)A;
 else
     if (exist('imresize','file')>1)
         %use imresize if it is available. (requires image processing toolbox)
         resizefun=@(A,super)imresize(A,super);
     else
-        if super>1
-            super=2.^round(log2(super));
+        if R.SuperSample>1
+            R.SuperSample=2.^round(log2(R.SuperSample));
             resizefun=@(A,super)interp2(A,log2(super));
         else
             %         warning('image downsampling fallback for no image processing toolbox not implemented yet');
             %         resizefun=@(A,super)A;
             %         super=1;
-            dwn=round(1./super);
-            super=1./dwn;
+            dwn=round(1./R.SuperSample);
+            R.SuperSample=1./dwn;
             skipperfun=@(A,super)A(ceil(.5*dwn):dwn:end,floor(.5/super):dwn:end);
             %resizefun=@(A,super)skipperfun(filter2(fspecial('gaussian',[0 0]+round(2./super),1./super)),A);
             resizefun=@(A,super)skipperfun(filter2(ones(dwn)/dwn^2,A),super);
@@ -160,63 +202,81 @@ else
     end
 end
 
-
 for ii=1:Np
-    p=points(ii,:);
+    %select current point:
+    p=[pu(ii) pv(ii)];
+    SearchWidth=R.SearchWidth(min(numel(R.SearchWidth),ii))-1;
+    SearchHeight=R.SearchHeight(min(numel(R.SearchHeight),ii))-1;
+    TemplateWidth=R.TemplateWidth(min(numel(R.TemplateWidth),ii))-1;
+    TemplateHeight=R.TemplateHeight(min(numel(R.TemplateHeight),ii))-1;
+    Initialdu=R.Initialdu(min(numel(R.Initialdu),ii));
+    Initialdv=R.Initialdv(min(numel(R.Initialdv),ii));
+    
+    % Actual pixel centre might differ from pu,pv because of rounding  
+    % 
+    Acenter=round(p) - mod([TemplateWidth TemplateHeight]/2,1);  % centre coordinate of template 
+    Bcenter=round(p+[Initialdu Initialdv]) - mod([SearchWidth SearchHeight]/2,1); % centre coordinate of search region
+    
+    %what was actually used:
+    pu(ii)=Acenter(1);
+    pv(ii)=Acenter(2);
+    Initialdu=Bcenter(1)-Acenter(1);
+    Initialdv=Bcenter(2)-Acenter(2);
+
+
     
     try
-        row=min(ii,size(whsearch,1));
-        BB=B(p(2)+dxyo(ii,2)+(-whsearch(row,2):whsearch(row,2)),p(1)+dxyo(ii,1)+(-whsearch(row,1):whsearch(row,1)),:);
-        row=min(ii,size(whtemplate,1));
-        AA=A(p(2)+(-whtemplate(row,2):whtemplate(row,2)),p(1)+(-whtemplate(row,1):whtemplate(row,1)),:);
+        BB=B( Bcenter(2)+(-SearchHeight/2:SearchHeight/2)  ,Bcenter(1)+(-SearchWidth/2:SearchWidth/2),:);
+        AA=A( Acenter(2)+(-TemplateHeight/2:TemplateHeight/2),Acenter(1)+(-TemplateWidth/2:TemplateWidth/2),:);
     catch
-        %out of bounds
+        %out of bounds... continue (and thus return a nan for that point)
         continue
     end
     
     
     
-    AA=resizefun(mean(AA,3),super); %TODO: improve edge effects of super sampling. (need 2 extra pixels for cubic) 
-    BB=resizefun(mean(BB,3),super);
+    AA=resizefun(mean(AA,3),R.SuperSample); %TODO: improve edge effects of super sampling. (need 2 extra pixels for cubic) 
+    BB=resizefun(mean(BB,3),R.SuperSample);
     
-    [C,xx,yy]=matchfun(AA,BB);
+    [C,uu,vv]=matchfun(AA,BB);
     [Cmax,mix]=max(C(:));
     [mix(1),mix(2)]=ind2sub(size(C),mix);
     
-    Cout(ii,2)=mean(abs(C(:))); %"noise" correlation level (we can accept that estimate even if we cannot find a good peak.)
+    meanAbsCorr(ii)=mean(abs(C(:))); %"noise" correlation level (we can accept that estimate even if we cannot find a good peak.)
     
     if ~(any(mix==1)||any(mix==size(C))) %do not accept any maxima on the edge of C
         %really simple/fast/crude sub pixel.  TODO: find bicubic interpolation max. (For now just super sample the imge for higher precision.)
-        [xx,yy]=meshgrid(xx(mix(2)+(-1:1)),yy(mix(1)+(-1:1)));
+        [uu,vv]=meshgrid(uu(mix(2)+(-1:1)),vv(mix(1)+(-1:1)));
         c=C(mix(1)+(-1:1),mix(2)+(-1:1));
         c=(c-mean(c(:)));c(c<0)=0; %best performance for landsat test images
         c=c./sum(c(:)); 
-        mix(2)=sum(xx(:).*c(:));
-        mix(1)=sum(yy(:).*c(:));
+        mix(2)=sum(uu(:).*c(:));
+        mix(1)=sum(vv(:).*c(:));
         
-        mix=mix([2 1])./super;
-        dxy(ii,:)=mix+dxyo(ii,1:2);
-        Cout(ii,1)=Cmax;
+        mix=mix([2 1])./R.SuperSample;
+        du(ii)=mix(1)+Initialdu;
+        dv(ii)=mix(2)+Initialdv;
+        peakCorr(ii)=Cmax;
     end
     
-    if ~isempty(showprogress)
-        if islogical(showprogress)
+    if ~isempty(R.ShowProgress)
+        if islogical(R.ShowProgress)
             if (cputime-lastdraw)>.1||(cputime<lastdraw)||(ii==Np)
                 backspaces=char(zeros(size(progressmsg))+8);
                 progressmsg=[uint8((1:40)<((ii/Np)*40)).*'+' ''];
-                progressmsg=sprintf('Templatematch [%s]  (%5.1f %+5.1f)',progressmsg,dxy(ii,1),dxy(ii,2));
+                progressmsg=sprintf('Templatematch [%s]  (%5.1f %+5.1f)',progressmsg,du(ii),dv(ii));
                 fprintf('%s%s',backspaces,progressmsg)
                 drawnow
                 lastdraw=cputime;
             end
         else
-            cc(:,ii)=min(max(Cout(ii,1)-Cout(ii,2),0),1);
-            set(htext,'string',sprintf('%+5.1f %+5.1f ',dxy(ii,1),dxy(ii,2)))%,'units','normalized','vert','top')
+            cc(:,ii)=min(max(peakCorr(ii)-meanAbsCorr(ii),0),1);
+            set(htext,'string',sprintf('%+5.1f %+5.1f ',du(ii),dv(ii)))%,'units','normalized','vert','top')
             set(hprogress,'position',[0 0 ii/Np 0.01])
             set(fh,'name',sprintf('Templatematch %3.0f%%',ii*100/Np));
             if (cputime-lastdraw)>.3||(cputime<lastdraw)||(ii==Np)
                 set(hscatterA,'cdata',cc);
-                posB=points+dxy;
+                posB=[R.pu(:)+du(:) R.pv(:)+dv(:)];
                 set(hscatterB,'cdata',cc,'xdata',posB(:,[1 1])','ydata',posB(:,[2 2])');
                 zlim([-1.1 .1]) %critical as otherwise matlabs clipping plane will throw out points with z=0 in older versions of matlab. BUG.
                 drawnow
@@ -227,9 +287,9 @@ for ii=1:Np
     
 end
 
-if ~isempty(showprogress)
+if ~isempty(R.ShowProgress)
     try
-        if islogical(showprogress)
+        if islogical(R.ShowProgress)
             progressmsg(:)=8;
             fprintf('%s',progressmsg);
         else
@@ -242,9 +302,9 @@ if ~isempty(showprogress)
     end
 end
 
-function [result,xx,yy]=phasecorr2(T,I)
+function [result,uu,vv]=phasecorr2(T,I)
 %
-%TODO-test: apply band-pass - (to remove supersampled high freqs, and
+%TODO-test: apply band-pass - (to remove SuperSampled high freqs, and
 %low-passed to remove long wavelength effects (edges).
 sA=size(T);sB=size(I);
 sz=sA+sB-1;
@@ -258,13 +318,13 @@ result = real(ifft2(double(FAB)));
 
 c=(sB-sA)/2+1; %center for zero lag
 wkeep=(sB-sA)/2-3;
-xx=-wkeep(2):wkeep(2);
-yy=-wkeep(1):wkeep(1);
-rows=mod(yy+c(1)-1,sz(1))+1;
-cols=mod(xx+c(2)-1,sz(2))+1;
+uu=-wkeep(2):wkeep(2);
+vv=-wkeep(1):wkeep(1);
+rows=mod(vv+c(1)-1,sz(1))+1;
+cols=mod(uu+c(2)-1,sz(2))+1;
 result=result(rows,cols);
 
-function [C,xx,yy]=matNCC(T,B)
+function [C,uu,vv]=matNCC(T,B)
 sT = size(T); sB = size(B);
 outsize = sB + sT-1;
 try
@@ -276,11 +336,11 @@ end
 wkeep=(sB-sT)/2;
 c=(outsize+1)/2;
 C=C(c(1)+(-wkeep(1):wkeep(1)),c(2)+(-wkeep(2):wkeep(2)));
-xx=-wkeep(2):wkeep(2);
-yy=-wkeep(1):wkeep(1);
+uu=-wkeep(2):wkeep(2);
+vv=-wkeep(1):wkeep(1);
 
 
-function [C,xx,yy]=myNCC(T,B)
+function [C,uu,vv]=myNCC(T,B)
 %
 % Alternative to NCC if no image processing toolbox. Requires single/double input.
 %
@@ -305,8 +365,8 @@ end
 wkeep=(sB-sT)/2;
 c=(sz+1)/2;
 C=C(c(1)+(-wkeep(1):wkeep(1)),c(2)+(-wkeep(2):wkeep(2)));
-xx=-wkeep(2):wkeep(2);
-yy=-wkeep(1):wkeep(1);
+uu=-wkeep(2):wkeep(2);
+vv=-wkeep(1):wkeep(1);
 
 
 function lsum=localsum(A,sz)
@@ -356,8 +416,6 @@ surface(X,Y,zeros(size(X))-1,A,'EdgeColor','none','FaceColor','texturemap'); %it
 axis off tight equal image ij;
 zlim([-1.1 .1]) %critical as otherwise matlabs clipping plane will throw out points with z=0 in older versions of matlab. BUG.
 hold on
-
-
 
 
 

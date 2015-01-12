@@ -17,9 +17,9 @@ datafolder=downloadDemoData('cias');
 
 A=imread(fullfile(datafolder,'batura_2001.tif')); 
 B=imread(fullfile(datafolder,'batura_2002.tif')); %normally you would use geotiffread
-x=(0:size(A,2)-1)*15+451357.50; %if you have mapping toolbox then use pixcenters here. 
+x=(0:size(A,2)-1)*15+451357.50; %if you have mapping toolbox then you would use pixcenters here. 
 y=(0:size(A,1)-1)*15+4060432.50;
-dx=15;%m/pixel
+deltax=15;%m/pixel
 
 
 %make regular grid of points to track:
@@ -31,12 +31,10 @@ roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;...
      1061 1168;663 718;456 686;25 877;28 627;407 465];
  
 ix=find(inpolygon(pu,pv,roi(:,1),roi(:,2)));
-uvA=[pu(ix) pv(ix)]; %these are the points we want to track.
+pu=pu(ix); pv=pv(ix);
 
-whtemplate=10; %template/chip size
-whsearch=30; %search window size
-super=1; %No super sampling 
-[dxy,C]=templatematch(A,B,uvA,whtemplate,whsearch,super,[0 0],{'2001' '2002'});
+t
+[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,'showprogress',{'2001' '2002'});
 close all
 
 %visualize the results
@@ -46,17 +44,13 @@ image(repmat(A,[1 1 3]),'CDataMapping','scaled') %the cdatamapping is a workarou
 axis equal off tight ij
 hold on
 
-signal2noise=C(:,1)./C(:,2);
-keep=(signal2noise>2.3)&(C(:,1)>.7);
-V=dxy*dx; 
-Vn=sqrt(sum(V.^2,2));
-scatter(uvA(keep,1),uvA(keep,2),200,Vn(keep),'.') %colors speed
-quiver(uvA(keep,1),uvA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),0.2,'k') %arrows show direction. 
+signal2noise=C./Cnoise;
+keep=(signal2noise>2.3)&(C>.65);
+V=(du+dv*1i)*deltax; %m/yr
+V(~keep)=nan;
+Vn=abs(V);
+scatter(pu(keep),pv(keep),300,Vn(keep),'.') %colors speed
+quiver(pu,pv,real(V)./Vn,imag(V)./Vn,0.2,'k') %arrows show direction. 
 colormap jet
 caxis([0 200])
 colorbar('southoutside');
-% if ~verLessThan('matlab', '8.4.0')
-%     set(hcb,'limits',caxis) %workaround for a critical colorbar bug in Matlab 2014b preview... TODO: check if bug present in final release
-% end
-
-
