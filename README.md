@@ -9,7 +9,9 @@ On the [ImGRAFT](http://imgraft.glaciology.net) web site you will find more deta
 * [Examples](http://imgraft.glaciology.net/documentation/examples)
 * [Project news](http://imgraft.glaciology.net/news)
 
-This software is open source (See licensing details elsewhere). In addition to the formal licensing terms, We would greatly appreciate an acknowledgement. Preferably in the form of a citation (once the paper is out) and a link to the web-page. 
+This software is open source (See licensing details elsewhere). In addition to the formal licensing terms, We would greatly appreciate an acknowledgement. Preferably in the form of a citation and a link to the web-page. 
+
+Citation: Messerli, A. and Grinsted, A. (2015), Image GeoRectification And Feature Tracking toolbox: ImGRAFT, Geosci. Instrum. Method. Data Syst., 4, 23-34, doi:[10.5194/gi-4-23-2015](http://dx.doi.org/10.5194/gi-4-23-2015)
 
 
 ## Features:
