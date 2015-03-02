@@ -83,7 +83,11 @@ if isempty(R.SearchWidth), R.SearchWidth = R.TemplateWidth+40; end;
 if isempty(R.SearchHeight), R.SearchHeight = R.SearchWidth; end;
 
 if isempty(R.pu)
-    [R.pu,R.pv]=meshgrid(R.SearchWidth/2:R.TemplateWidth(1)/2:size(A,2)-R.SearchWidth/2,R.SearchHeight/2:R.TemplateHeight(1)/2:size(A,1)-R.SearchHeight/2);
+    dpu=max(R.TemplateWidth(1)/2,size(A,2)/100); %dont auto generate excessive number of points (idea from: Chad Greene)
+    dpv=max(R.TemplateHeight(1)/2,size(A,1)/100); 
+    R.pu=R.SearchWidth(1)/2 : dpu : size(A,2)-R.SearchWidth(1)/2;
+    R.pv=R.SearchHeight(1)/2: dpv : size(A,1)-R.SearchHeight(1)/2;
+    [R.pu,R.pv]=meshgrid(R.pu,R.pv);
 end
 
 %TODO: make better dimension checking!
@@ -159,8 +163,8 @@ if ~isempty(R.ShowProgress)
         hax=axes('pos',[0 0.01 0.5 0.95]);
         showimg(A);
         text(0.5,1,R.ShowProgress{1},'units','normalized','vert','bottom','fontname','courier','horiz','center')
-        cc=zeros(2,Np);
-        hscatterA=mesh([R.pu(:) R.pu(:)]',[R.pv(:) R.pv(:)]',zeros(2,Np),'mesh','column','marker','.','markersize',7,'cdata',cc); %bizarrely much faster than scatter
+        cc=zeros(2,Np);cc(:,isnan(R.Initialdu+R.Initialdv))=nan;
+        hscatterA=mesh([R.pu(:) R.pu(:)]',[R.pv(:) R.pv(:)]',cc,'mesh','column','marker','.','markersize',7,'cdata',cc); %bizarrely much faster than scatter
         colormap autumn
         caxis([0 1])
         hax(2)=axes('pos',[0.5 0.01 0.5 0.95]);
@@ -246,12 +250,25 @@ for ii=1:Np
     
     if ~(any(mix==1)||any(mix==size(C))) %do not accept any maxima on the edge of C
         %really simple/fast/crude sub pixel.  TODO: find bicubic interpolation max. (For now just super sample the imge for higher precision.)
-        [uu,vv]=meshgrid(uu(mix(2)+(-1:1)),vv(mix(1)+(-1:1)));
         c=C(mix(1)+(-1:1),mix(2)+(-1:1));
-        c=(c-mean(c(:)));c(c<0)=0; %best performance for landsat test images
+        [uu,vv]=meshgrid(uu(mix(2)+(-1:1)),vv(mix(1)+(-1:1)));
+        c=(c-mean(c(:)));c(c<0)=0; %simple and excellent performance for landsat test images... 
         c=c./sum(c(:)); 
         mix(2)=sum(uu(:).*c(:));
         mix(1)=sum(vv(:).*c(:));
+%         %ALTERNATIVE 3x3 METHOD: http://www.mathworks.com/matlabcentral/fileexchange/26504-sub-sample-peak-fitting-2d
+%         %by: Eric from HTWK Leipzig
+%         pa = (c(2,1)+c(1,1)-2*c(1,2)+c(1,3)-2*c(3,2)-2*c(2,2)+c(2,3)+c(3,1)+c(3,3));
+%         pb = (c(3,3)+c(1,1)-c(1,3)-c(3,1));
+%         pc = (-c(1,1)+c(1,3)-c(2,1)+c(2,3)-c(3,1)+c(3,3));
+%         %pd = (2*c(2,1)-c(1,1)+2*c(1,2)-c(1,3)+2*c(3,2)+5*c(2,2)+2*c(2,3)-c(3,1)-c(3,3));
+%         pe = (-2*c(2,1)+c(1,1)+c(1,2)+c(1,3)+c(3,2)-2*c(2,2)-2*c(2,3)+c(3,1)+c(3,3));
+%         pf = (-c(1,1)-c(1,2)-c(1,3)+c(3,1)+c(3,2)+c(3,3));
+%         % (ys,xs) is subpixel shift of peak location relative to center (2,2)
+%         mix = [(6*pb*pf-8*pe*pc) (6*pb*pc-8*pa*pf)]/(16*pe*pa-9*pb^2);
+        %alternative method 2 (7x7?): http://www.mathworks.com/matlabcentral/fileexchange/46964-fastreg-zip/content//fastreg.m
+        %looks vaguely similar to my own. 
+        
         
         mix=mix([2 1])./R.SuperSample;
         du(ii)=mix(1)+Initialdu;
