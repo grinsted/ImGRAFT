@@ -119,7 +119,7 @@ DeltaViewDirection=(camB.viewdir-camA.viewdir)*180/pi
 sig=10; % standard deviation / spatial width of filter
 fgauss=exp(-.5*((-sig*1.5:sig*1.5)/sig).^2); %a gaussian filter.
 fgauss=fgauss'*fgauss; %2d-gaussian. You can use fspecial('gaussian',...) if you have the image processing toolbox
-dem.smoothed=filter2(fgauss/sum(fgauss(:)),dem.Z); %imfilter with replicate same is better at edges. 
+dem.smoothed=filter2(fgauss/sum(fgauss(:)),dem.Z-800)+800; %imfilter with replicate same is better at edges. 
 
 % Apply an extreme weighting local smooth to the deviation between the
 % sZ and Zmask (extract tops of crevasses):
@@ -140,7 +140,6 @@ figure
 plot(dem.x,dem.filled(400,:),dem.x,dem.Z(400,:),dem.x,dem.smoothed(400,:))
 legend('crevasse filled','original','smoothed','location','best')
 title('Slice through crevasse filled dem.')
-
 
 %% Viewshed from camera
 % The viewshed is all the points of the dem that are visible from the

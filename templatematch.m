@@ -12,15 +12,18 @@ function [du, dv, peakCorr, meanAbsCorr,pu,pv]=templatematch(A,B,varargin)
 %
 %
 % NAMED PARAMETERS: 
-%    TemplateWidth,TemplateHeight: Size of templates in A (Default: 21).
+%    TemplateWidth,TemplateHeight: Size of templates in A (Default: 21). 
 %    SearchWidth,SearchHeight: Size of search region in B (Default: TemplateWidth+40).
 %    SuperSample: super sampling factor of input images for improved subpixel accuracy. (default=1)
 %    Initialdu,Initialdv: initial guess of the displacement between A & B
-%    super: supersampling factor (input to imresize)
+%    Super: supersampling factor (input to imresize)
 %    ShowProgress: Boolean or cell-array of strings.
 %                  true (default) is used for a text progress bar.
 %                  A cell of strings is used to name the A & B images in a progress figure.
 %    Method: 'NCC'(default), 'NORMXCORR2' or 'PC' (normalized cross correlation or phase correlation)
+%
+%  * The template/search height is assumed to be the same as corresponding
+%  widths if not explicitly specified. 
 %
 % OUTPUTS:
 %   du,dv: displacement of each point in pu,pv. [A(pu,pv) has moved to B(pu+du,pv+dv)]

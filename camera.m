@@ -159,6 +159,7 @@ classdef camera
                 xy=[a.*xy(:,1)+2*cam.p(1)*xty+cam.p(2)*(r2+2*xy(:,1).^2), a.*xy(:,2)+2*cam.p(1)*xty+cam.p(2)*(r2+2*xy(:,2).^2)];
             end
             uv=[cam.f(1)*xy(:,1)+cam.c(1) cam.f(2)*xy(:,2)+cam.c(2)];
+            uv(xyz(:,3)<=0,:)=nan; 
             
             if nargout>1
                 depth=xyz(:,3);

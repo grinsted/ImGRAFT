@@ -33,7 +33,6 @@ roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;...
 ix=find(inpolygon(pu,pv,roi(:,1),roi(:,2)));
 pu=pu(ix); pv=pv(ix);
 
-t
 [du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,'showprogress',{'2001' '2002'});
 close all
 
