@@ -59,12 +59,15 @@ function [du, dv, peakCorr, meanAbsCorr,pu,pv]=templatematch(A,B,varargin)
 
 p=inputParser;
 p.FunctionName='templatematch';
-p.PartialMatching=true;
-p.StructExpand=true;
-p.CaseSensitive=false;
+try %older versions of matlab did not support partialmatching.
+    p.CaseSensitive=false;
+    p.StructExpand=true;
+    p.PartialMatching=true;
+catch
+end
 p.addOptional('pu',[],@isnumeric);
 p.addOptional('pv',[],@isnumeric);
-p.addParameter('TemplateWidth',21,@isnumeric); 
+p.addParameter('TemplateWidth',41,@isnumeric); 
 p.addParameter('TemplateHeight',[],@isnumeric);
 p.addParameter('SearchWidth',[],@isnumeric);
 p.addParameter('SearchHeight',[],@isnumeric);
@@ -82,7 +85,7 @@ if all(size(R.pu))~=all(size(R.pv))
 end
 
 if isempty(R.TemplateHeight), R.TemplateHeight=R.TemplateWidth; end;
-if isempty(R.SearchWidth), R.SearchWidth = R.TemplateWidth+40; end;
+if isempty(R.SearchWidth), R.SearchWidth = R.TemplateWidth+60; end;
 if isempty(R.SearchHeight), R.SearchHeight = R.SearchWidth; end;
 
 if isempty(R.pu)
