@@ -234,7 +234,7 @@ classdef camera
                     uv0(:,4)=Y(visible(:));
                     uv0(:,5)=Z(visible(:));
                     uv0=uv0(inframe,:);
-                    if exist('scatteredInterpolant','file')>1
+                    if exist('scatteredInterpolant','file')>1 
                         Xscat=scatteredInterpolant(uv0(:,3),uv0(:,4),uv0(:,3));
                         Xscat.Points=uv0(:,1:2);
                         Yscat=Xscat; Yscat.Values=uv0(:,4);

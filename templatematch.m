@@ -128,7 +128,7 @@ pv=R.pv;
 
 switch upper(R.Method)
     case 'NORMXCORR2'
-        if exist('normxcorr2','file')>1
+        if license('test','image_toolbox') %exist('normxcorr2','file')>1
             matchfun=@matNCC; %TODO: use myNCC if float inputs? which is faster?
         else
             if ~isfloat(A),A=im2float(A); end
@@ -190,7 +190,7 @@ lastdraw=cputime;
 if R.SuperSample==1
     resizefun=@(A,super)A;
 else
-    if (exist('imresize','file')>1)
+    if license('test','image_toolbox') %(exist('imresize','file')>1)
         %use imresize if it is available. (requires image processing toolbox)
         resizefun=@(A,super)imresize(A,super);
     else
