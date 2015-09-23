@@ -79,7 +79,7 @@ title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 
 %First get an approximate estimate of the image shift using a single large
 %template
-[duoffset,dvoffset]=templatematch(A,B,3000,995,'templatewidth',261,'searchwidth',400,'supersample',0.5,'showprogress',false,'method','PC') %Note PC=PhaseCorrelation is still experimental. 
+[duoffset,dvoffset]=templatematch(A,B,3000,995,'templatewidth',261,'searchwidth',400,'supersample',0.5,'showprogress',false) %Note PC=PhaseCorrelation is still experimental. 
 
 %Get a whole bunch of image shift estimates using a grid of probe points.
 %Having multiple shift estimates will allow us to determine camera
