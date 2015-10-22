@@ -62,12 +62,13 @@ fprintf('reprojectionerror=%3.1fpx  AIC:%4.0f\n',rmse,aic)
 
 %Visually compare the projection of the GCPs with the pixel coords:
 figure
+axes('position',[0 .1 1 .8]); hold on
 image(A)
-axis equal off
+axis equal off ij
 hold on
 uv=camA.project(gcpA(:,1:3));
 plot(gcpA(:,4),gcpA(:,5),'+',uv(:,1),uv(:,2),'rx')
-legend('UV of GCP','projection of GCPs')
+legend('UV of GCP','projection of GCPs','location','southoutside')
 title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 
 
