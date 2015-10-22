@@ -1,5 +1,5 @@
 
-html/
+
 repoexclude/
 demos/*.zip
 demos/*/
@@ -60,7 +60,7 @@ slprj/
 
 
 #standard gitignore rules. .. Some not relevant for this particular project but excluded anyway:
-#compiled 
+#compiled
 *.com
 *.pyc
 *.class

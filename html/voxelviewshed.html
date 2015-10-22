@@ -1,0 +1,166 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>voxelviewshed</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-10-10"><meta name="DC.source" content="voxelviewshed.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function vis=voxelviewshed(X,Y,Z,camxyz)
+% Calculate a viewshed over a DEM (fast)
+%
+% USAGE: vis=voxelviewshed(X,Y,Z,camxyz)
+%
+% INPUTS:
+% X,Y,Z: input DEM (regular grid).
+% camxyz: 3-element vector specifying viewpoint.
+%
+% OUTPUT:
+%    vis: boolean visibility matrix (same size as Z)
+%
+% EXAMPLE:
+%     [X,Y]=meshgrid(-299:300);
+%     Z=abs(ifft2(ifftshift((hypot(Y,X)+1e-5).^(-2.1).*exp(rand(size(X))*2i*pi)))); %example terrain inspired by rafael.pinto
+%     Z=(Z-Z(300,300))/std(Z(:)); camxyz=[0,0,0.5];
+%     vis=voxelviewshed(X,Y,Z,camxyz);
+%     clf;
+%     surf(X,Y,Z,Z.*vis-~vis*2,'EdgeColor','none','FaceColor','interp');
+%     hold on;
+%     plot3(camxyz(1),camxyz(2),camxyz(3),'k*')
+%     camlight
+%
+% v0.3 Aslak Grinsted 2014
+
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the "Software"), to deal
+% in the Software without restriction, including without limitation the rights
+% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% copies of the Software, and to permit persons to whom the Software is
+% furnished to do so, subject to the following conditions:
+% 
+% The above copyright notice and this permission notice shall be included in
+% all copies or substantial portions of the Software.
+% 
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+% THE SOFTWARE.
+
+if nargin==0 %run an example if no input arguments.
+    warning('no input arguments. Will use test dataset.... ')
+    [X,Y]=meshgrid(-299:300);
+    Z=abs(ifft2(ifftshift((hypot(Y,X)+1e-5).^(-2.1).*exp(rand(size(X))*2i*pi)))); %example terrain inspired by rafael.pinto
+    Z=(Z-Z(300,300))/std(Z(:)); camxyz=[0.002,0.002,0.5];
+    vis=voxelviewshed(X,Y,Z,camxyz);
+    clf;
+    surf(X,Y,Z,Z.*vis-~vis*2,'EdgeColor','none','FaceColor','interp');
+    hold on; colormap jet; camlight;
+    plot3(camxyz(1),camxyz(2),camxyz(3),'k.','markersize',40)
+    plot3([0 camxyz(1)],[0 camxyz(2)],[0 camxyz(3)],'k-','linewidth',3)
+    clear vis
+    title('monotone=hidden from view | BlackDot=camera position')
+    return
+end
+
+dx=abs(X(2,2)-X(1,1));
+dy=abs(Y(2,2)-Y(1,1));
+
+sz=size(Z);
+X=(X(:)-camxyz(1))/dx;
+Y=(Y(:)-camxyz(2))/dy;
+Z=Z(:)-camxyz(3);
+
+d=sqrt(X.^2+Y.^2+Z.^2); %would X,Y be OK? (in most conditions: yes)
+%d=sqrt(X.^2+Y.^2); 
+x=(atan2(Y,X)+pi)/(pi*2);
+y=Z./d;
+
+[~,ix]=sortrows([round(sqrt(X.^2+Y.^2)) x]); %round
+
+loopix=find(diff(x(ix))<0);
+vis=true(size(X,1),1);
+
+maxd=nanmax(d);%TODO: optimize
+N=ceil(2*pi/(dx/maxd)); %number of points in voxel horizon
+
+voxx=(0:N)'/N;
+voxy=zeros(size(voxx))-inf;
+
+for k=1:length(loopix)-1
+    lp=ix(loopix(k)+1:loopix(k+1));
+    lp=lp([end 1:end 1]);
+    yy=y(lp);  xx=x(lp);
+    xx(1)=xx(1)-1;xx(end)=xx(end)+1;
+    vis(lp(2:end-1))=interp1q(voxx,voxy,xx(2:end-1))<yy(2:end-1);
+    voxy=max(voxy,interp1q(xx,yy,voxx));
+end
+vis=reshape(vis,sz);
+
+
+##### SOURCE END #####
+--></body></html>
