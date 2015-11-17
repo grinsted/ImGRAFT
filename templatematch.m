@@ -256,23 +256,23 @@ for ii=1:Np
     
     if ~(any(mix==1)||any(mix==size(C))) %do not accept any maxima on the edge of C
 
-%         %really simple/fast/crude sub pixel.  TODO: find bicubic interpolation max. (For now just super sample the imge for higher precision.)
-%         c=C(mix(1)+(-1:1),mix(2)+(-1:1));
-%         [uu,vv]=meshgrid(uu(mix(2)+(-1:1)),vv(mix(1)+(-1:1)));
-%         % c=(c-mean(c(:)));c(c<0)=0; %simple and excellent performance for landsat test images...
-%         c=(c-mean(c([1:4 6:9])));c(c<0)=0;
-%         c=c./sum(c(:));
-%         mix(2)=sum(uu(:).*c(:));
-%         mix(1)=sum(vv(:).*c(:));
-%          
-%         %OWN: 5x5
-        c=C(mix(1)+(-2:2),mix(2)+(-2:2));
-        [uu,vv]=meshgrid(uu(mix(2)+(-2:2)),vv(mix(1)+(-2:2)));
+        %really simple/fast/crude sub pixel.  TODO: find bicubic interpolation max. (For now just super sample the imge for higher precision.)
+        c=C(mix(1)+(-1:1),mix(2)+(-1:1));
+        [uu,vv]=meshgrid(uu(mix(2)+(-1:1)),vv(mix(1)+(-1:1)));
         % c=(c-mean(c(:)));c(c<0)=0; %simple and excellent performance for landsat test images...
-        c=(c-mean(c([1:12 14:end])));c(c<0)=0;
+        c=(c-mean(c([1:4 6:9])));c(c<0)=0;
         c=c./sum(c(:));
         mix(2)=sum(uu(:).*c(:));
         mix(1)=sum(vv(:).*c(:));
+         
+% %         %OWN: 5x5
+%         c=C(mix(1)+(-2:2),mix(2)+(-2:2));
+%         [uu,vv]=meshgrid(uu(mix(2)+(-2:2)),vv(mix(1)+(-2:2)));
+%         % c=(c-mean(c(:)));c(c<0)=0; %simple and excellent performance for landsat test images...
+%         c=(c-mean(c([1:12 14:end])));c(c<0)=0;
+%         c=c./sum(c(:));
+%         mix(2)=sum(uu(:).*c(:));
+%         mix(1)=sum(vv(:).*c(:));
 
         %OWN: 7x7
 %         qw=3;
