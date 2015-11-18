@@ -12,16 +12,11 @@ datafolder=downloadDemoData('cias');
 
 %%load data
 %
-% Here we use imread instead of geotiffread, to avoid having a dependency
-% between ImGRAFT and the mapping toolbox. But if you have the mapping toolbox
-% then I recommend loading the landsat scenes using geoimread.m from here:
-% http://www.mathworks.com/matlabcentral/fileexchange/46904-geoimread
+% 
 
-A=imread(fullfile(datafolder,'batura_2001.tif')); 
-B=imread(fullfile(datafolder,'batura_2002.tif')); %normally you would use geotiffread
-x=(0:size(A,2)-1)*15+451357.50; %if you have mapping toolbox then you would use pixcenters here. 
-y=(0:size(A,1)-1)*15+4060432.50;
-deltax=15;%m/pixel
+[A,x,y,Ia]=geoimread(fullfile(datafolder,'batura_2001.tif')); 
+[B,xb,yb,Ib]=geoimread(fullfile(datafolder,'batura_2002.tif')); 
+deltax=x(2)-x(1);%m/pixel
 
 
 %make regular grid of points to track:

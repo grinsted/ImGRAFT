@@ -254,52 +254,53 @@ for ii=1:Np
     
     meanAbsCorr(ii)=mean(abs(C(:))); %"noise" correlation level (we can accept that estimate even if we cannot find a good peak.)
     
-    if ~(any(mix==1)||any(mix==size(C))) %do not accept any maxima on the edge of C
+    edgedist=min(abs([1-mix mix-size(C)]));
+    switch edgedist  %SUBPIXEL METHOD:...
+        case 0, %do-nothing.... 
+            mix=[];% do not accept peaks on edge
+        case 1, %3x3
+            %really simple/fast/crude sub pixel.  TODO: find bicubic interpolation max. (For now just super sample the imge for higher precision.)
+            c=C(mix(1)+(-1:1),mix(2)+(-1:1));
+            [uu,vv]=meshgrid(uu(mix(2)+(-1:1)),vv(mix(1)+(-1:1)));
+            % c=(c-mean(c(:)));c(c<0)=0;
+            c=(c-mean(c([1:4 6:9])));c(c<0)=0; %simple and excellent performance for landsat test images...
+            c=c./sum(c(:));
+            mix(2)=sum(uu(:).*c(:));
+            mix(1)=sum(vv(:).*c(:));
+            %         %ALTERNATIVE 3x3 METHOD: http://www.mathworks.com/matlabcentral/fileexchange/26504-sub-sample-peak-fitting-2d
+            %         %by: Eric from HTWK Leipzig
+            %         pa = (c(2,1)+c(1,1)-2*c(1,2)+c(1,3)-2*c(3,2)-2*c(2,2)+c(2,3)+c(3,1)+c(3,3));
+            %         pb = (c(3,3)+c(1,1)-c(1,3)-c(3,1));
+            %         pc = (-c(1,1)+c(1,3)-c(2,1)+c(2,3)-c(3,1)+c(3,3));
+            %         %pd = (2*c(2,1)-c(1,1)+2*c(1,2)-c(1,3)+2*c(3,2)+5*c(2,2)+2*c(2,3)-c(3,1)-c(3,3));
+            %         pe = (-2*c(2,1)+c(1,1)+c(1,2)+c(1,3)+c(3,2)-2*c(2,2)-2*c(2,3)+c(3,1)+c(3,3));
+            %         pf = (-c(1,1)-c(1,2)-c(1,3)+c(3,1)+c(3,2)+c(3,3));
+            %         % (ys,xs) is subpixel shift of peak location relative to center (2,2)
+            %         mix = [(6*pb*pf-8*pe*pc) (6*pb*pc-8*pa*pf)]/(16*pe*pa-9*pb^2);
+            
+        otherwise %5x5....
+            c=C(mix(1)+(-2:2),mix(2)+(-2:2));
+            [uu,vv]=meshgrid(uu(mix(2)+(-2:2)),vv(mix(1)+(-2:2)));
+            c=(c-mean(c([1:12 14:end])));c(c<0)=0;%simple and excellent performance for landsat test images... 
+            c=c./sum(c(:));
+            mix(2)=sum(uu(:).*c(:));
+            mix(1)=sum(vv(:).*c(:));
 
-        %really simple/fast/crude sub pixel.  TODO: find bicubic interpolation max. (For now just super sample the imge for higher precision.)
-        c=C(mix(1)+(-1:1),mix(2)+(-1:1));
-        [uu,vv]=meshgrid(uu(mix(2)+(-1:1)),vv(mix(1)+(-1:1)));
-        % c=(c-mean(c(:)));c(c<0)=0; %simple and excellent performance for landsat test images...
-        c=(c-mean(c([1:4 6:9])));c(c<0)=0;
-        c=c./sum(c(:));
-        mix(2)=sum(uu(:).*c(:));
-        mix(1)=sum(vv(:).*c(:));
-         
-% %         %OWN: 5x5
-%         c=C(mix(1)+(-2:2),mix(2)+(-2:2));
-%         [uu,vv]=meshgrid(uu(mix(2)+(-2:2)),vv(mix(1)+(-2:2)));
-%         % c=(c-mean(c(:)));c(c<0)=0; %simple and excellent performance for landsat test images...
-%         c=(c-mean(c([1:12 14:end])));c(c<0)=0;
-%         c=c./sum(c(:));
-%         mix(2)=sum(uu(:).*c(:));
-%         mix(1)=sum(vv(:).*c(:));
+            %OWN: 7x7
+            %         qw=3;
+            %         c=C(mix(1)+(-qw:qw),mix(2)+(-qw:qw));
+            %         [uu,vv]=meshgrid(uu(mix(2)+(-qw:qw)),vv(mix(1)+(-qw:qw)));
+            %         % c=(c-mean(c(:)));c(c<0)=0; %simple and excellent performance for landsat test images...
+            %         c=(c-mean(c(:)));c(c<0)=0;
+            %         c=c./sum(c(:));
+            %         mix(2)=sum(uu(:).*c(:));
+            %         mix(1)=sum(vv(:).*c(:));
+            
+            %alternative method 2 (7x7?): http://www.mathworks.com/matlabcentral/fileexchange/46964-fastreg-zip/content//fastreg.m
+            %looks vaguely similar to my own.
 
-        %OWN: 7x7
-%         qw=3;
-%         c=C(mix(1)+(-qw:qw),mix(2)+(-qw:qw));
-%         [uu,vv]=meshgrid(uu(mix(2)+(-qw:qw)),vv(mix(1)+(-qw:qw)));
-%         % c=(c-mean(c(:)));c(c<0)=0; %simple and excellent performance for landsat test images...
-%         c=(c-mean(c(:)));c(c<0)=0;
-%         c=c./sum(c(:));
-%         mix(2)=sum(uu(:).*c(:));
-%         mix(1)=sum(vv(:).*c(:));        
-        
-        
-        
-%         %ALTERNATIVE 3x3 METHOD: http://www.mathworks.com/matlabcentral/fileexchange/26504-sub-sample-peak-fitting-2d
-%         %by: Eric from HTWK Leipzig
-%         pa = (c(2,1)+c(1,1)-2*c(1,2)+c(1,3)-2*c(3,2)-2*c(2,2)+c(2,3)+c(3,1)+c(3,3));
-%         pb = (c(3,3)+c(1,1)-c(1,3)-c(3,1));
-%         pc = (-c(1,1)+c(1,3)-c(2,1)+c(2,3)-c(3,1)+c(3,3));
-%         %pd = (2*c(2,1)-c(1,1)+2*c(1,2)-c(1,3)+2*c(3,2)+5*c(2,2)+2*c(2,3)-c(3,1)-c(3,3));
-%         pe = (-2*c(2,1)+c(1,1)+c(1,2)+c(1,3)+c(3,2)-2*c(2,2)-2*c(2,3)+c(3,1)+c(3,3));
-%         pf = (-c(1,1)-c(1,2)-c(1,3)+c(3,1)+c(3,2)+c(3,3));
-%         % (ys,xs) is subpixel shift of peak location relative to center (2,2)
-%         mix = [(6*pb*pf-8*pe*pc) (6*pb*pc-8*pa*pf)]/(16*pe*pa-9*pb^2);
-        %alternative method 2 (7x7?): http://www.mathworks.com/matlabcentral/fileexchange/46964-fastreg-zip/content//fastreg.m
-        %looks vaguely similar to my own. 
-        
-        
+    end
+    if ~isempty(mix)
         mix=mix([2 1])./R.SuperSample;
         du(ii)=mix(1)+Initialdu;
         dv(ii)=mix(2)+Initialdv;
