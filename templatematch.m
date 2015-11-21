@@ -139,10 +139,18 @@ switch upper(R.Method)
         if ~isfloat(A),A=im2float(A); end
         if ~isfloat(B),B=im2float(B); end
         matchfun=@myNCC;
+    case {'CCF'}
+        if ~isfloat(A),A=im2float(A); end
+        if ~isfloat(B),B=im2float(B); end
+        matchfun=@CCF;
     case 'PC'
         matchfun=@phasecorr2;
     otherwise
         error('imgraft:inputerror','unknown Method: %s',R.Method)
+end
+
+if ~isreal(B)
+    B=conj(B); %TODO: if you pass it orientation angles. 
 end
 
 if islogical(R.ShowProgress)
@@ -400,16 +408,38 @@ sigmaT=realsqrt(sum((T(:)-meanT).^2));
 if sigmaT~=0
     fT=fft2(rot90(T,2),sz(1),sz(2));
     fB=fft2(B,sz(1),sz(2));
-    C=real(ifft2(fB.*fT));
+    C=(ifft2(fB.*fT));
     lsumB=localsum(B,sT);
-    %sigmaB=sqrt(max(localsum(B.*B,sT)-(lsumB.^2)/numel(T),0));
-    %C=(C-lsumB*meanT)./(sigmaT*max(sigmaB,sigmaT/1e5)); %not 100% robust. Uses 1e5 div0 trick from D.Kroon (thanks)
     sigmaB=realsqrt(max(localsum(B.*B,sT)-(lsumB.^2)/numel(T),0)); %is the max really necessary ?
-    C=(C-lsumB*meanT)./(sigmaT*sigmaB);
+    C=real((C-lsumB*meanT)./(sigmaT*sigmaB));
     C(abs(C)>1.1)=0; %this can happen if sigmaB almost 0, but we still allow C<1.1 to accomodate potential rounding issue for perfect correlation.
 else
     C=zeros(sz);
 end
+%crop to central part not affected by edges.
+wkeep=(sB-sT)/2;
+c=(sz+1)/2;
+C=C(c(1)+(-wkeep(1):wkeep(1)),c(2)+(-wkeep(2):wkeep(2)));
+uu=-wkeep(2):wkeep(2);
+vv=-wkeep(1):wkeep(1);
+
+
+function [C,uu,vv]=CCF(T,B)
+%
+% Cross-correlation F - Requires single/double input.
+%
+sT=size(T); sB=size(B);
+sz=sB+sT-1;
+%meanT=sum(T(:))/numel(T);
+%sigmaT=sqrt(sum((T(:)-meanT).^2));
+%if sigmaT~=0
+    fT=fft2(rot90(T,2),sz(1),sz(2));
+    fB=fft2(B,sz(1),sz(2));
+    C=real(ifft2(fB.*fT));
+    %C(abs(C)>1.1)=0; %this can happen if sigmaB almost 0, but we still allow C<1.1 to accomodate potential rounding issue for perfect correlation.
+%else
+%    C=zeros(sz);
+%end
 %crop to central part not affected by edges.
 wkeep=(sB-sT)/2;
 c=(sz+1)/2;

@@ -41,7 +41,7 @@ image(repmat(A,[1 1 3]),'CDataMapping','scaled') %the cdatamapping is a workarou
 axis equal off tight ij
 hold on
 signal2noise=C./Cnoise;
-keep=(signal2noise>2.3)&(C>.65);
+keep=(signal2noise>2)&(C>.6);
 V=(du+dv*1i)*deltax; %m/yr
 Vn=abs(V);
 alphawarp(pu,pv,Vn,.2+keep*.5)
