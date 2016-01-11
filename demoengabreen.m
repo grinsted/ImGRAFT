@@ -105,44 +105,6 @@ rmse
 DeltaViewDirection=(camB.viewdir-camA.viewdir)*180/pi 
 
 
-%% Prepare DEM by filling crevasses.
-%
-%
-% The matches between images are often visual features such as
-% the sharp contrast between the ice surface and shadow in a
-% crevasse. The visual edge of such features are located on the crevasse
-% tops and we use a smooth dem surface tracking through the crevasse tops
-% when mapping feature pixel coordinates to world coordinates. 
-%
-
-% Apply a local averaging smooth to the DEM:
-% large crevasses are ~40m wide. The filter has to be wide enough to bridge
-% crevasses.
-sig=10; % standard deviation / spatial width of filter
-fgauss=exp(-.5*((-sig*1.5:sig*1.5)/sig).^2); %a gaussian filter.
-fgauss=fgauss'*fgauss; %2d-gaussian. You can use fspecial('gaussian',...) if you have the image processing toolbox
-dem.smoothed=filter2(fgauss/sum(fgauss(:)),dem.Z-800)+800; %imfilter with replicate same is better at edges. 
-
-% Apply an extreme weighting local smooth to the deviation between the
-% sZ and Zmask (extract tops of crevasses):
-fdisk=fgauss>exp(-.5); %alternatively use fspecial('disk',round(sigma)); instead
-extremeweight=1.1;
-dem.filled=log(filter2(fdisk/sum(fdisk(:)),exp((dem.Z-dem.smoothed)*extremeweight)))/extremeweight;
-
-% apply a post-smoothing to the jagged crevasse tops.
-dem.filled=filter2(fgauss/sum(fgauss(:)),dem.filled);
-dem.filled=dem.filled+dem.smoothed;
-
-% Add back non-glaciated areas to the crevasse filled surface. 
-dem.filled(~dem.mask)=dem.Z(~dem.mask);
-
-% show a slice through the Original and crevasse filled DEM 
-% Plots like these help choose an appropriate filter sizes. 
-figure
-plot(dem.x,dem.filled(400,:),dem.x,dem.Z(400,:),dem.x,dem.smoothed(400,:))
-legend('crevasse filled','original','smoothed','location','best')
-title('Slice through crevasse filled dem.')
-
 %% Viewshed from camera
 % The viewshed is all the points of the dem that are visible from the
 % camera location. They may not be in the field of view of the lens. 
@@ -227,7 +189,7 @@ title('Velocity in metres per day')
 % from this. 
 
 
-[gradX,gradY]=gradient(dem.smoothed,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
+[gradX,gradY]=gradient(dem.filled,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
 gradN=sqrt(gradX.^2+gradY.^2);
 gradX=-gradX./gradN;gradY=-gradY./gradN;
 gradX=interp2(dem.X,dem.Y,gradX,xyzA(:,1),xyzA(:,2));
