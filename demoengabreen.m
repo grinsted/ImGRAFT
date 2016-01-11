@@ -167,8 +167,7 @@ V=(xyzB-xyzA)./(tB-tA); % 3d velocity.
 
 
 figure;
-image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014b.
-axis equal xy off tight
+showimg(dem.x,dem.y,dem.rgb);
 hold on
 Vn=sqrt(sum(V(:,1:2).^2,2));
 keep=signal2noise>2&C>.7;
@@ -200,7 +199,7 @@ Vg=[Vgn.*gradX Vgn.*gradY];
 
 close all
 figure
-image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014b
+showimg(dem.x,dem.y,dem.rgb);
 axis equal xy off tight
 
 hold on
