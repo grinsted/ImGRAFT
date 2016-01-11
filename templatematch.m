@@ -126,6 +126,10 @@ pu=R.pu;
 pv=R.pv;
 
 
+if all(isnan(pu+pv))
+    error('imgraft:inputerror','No points to track (pu/pv is all nans)')
+end
+
 switch upper(R.Method)
     case 'NORMXCORR2'
         if license('test','image_toolbox') %exist('normxcorr2','file')>1
@@ -427,6 +431,7 @@ vv=-wkeep(1):wkeep(1);
 function [C,uu,vv]=CCF(T,B)
 %
 % Cross-correlation F - Requires single/double input.
+% similar to xcorr2
 %
 sT=size(T); sB=size(B);
 sz=sB+sT-1;

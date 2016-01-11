@@ -333,7 +333,9 @@ classdef camera
             else
                 misfit=@(m)reshape(project(newcam(m),xyz)-uv,[],1);
             end
-            
+            if isnan(misfit(mbest))
+                error('All GCPs must be infront of the initial camera location for optimizecam to work.'); %TODO: write better explanation. and remove requirement. 
+            end
             
             [mbest,RSS]=LMFnlsq(misfit,mbest); %WORKS SUPER FAST
             %an anlternative is using fminunc followed by patternsearch
