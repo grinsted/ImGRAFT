@@ -4,7 +4,7 @@ function h=showimg(x,y,A)
 % Usage h=showimg(x,y,A)
 %
 %
-% Aslak Grinsted 2015
+% Aslak Grinsted 2016
 
 
 if ~isa(A,'uint8')
