@@ -65,8 +65,7 @@ X=(X(:)-camxyz(1))/dx;
 Y=(Y(:)-camxyz(2))/dy;
 Z=Z(:)-camxyz(3);
 
-d=sqrt(X.^2+Y.^2); %X,Y alone is OK. %+Z.^2;
-%d=sqrt(X.^2+Y.^2); 
+d=sqrt(X.^2+Y.^2+Z.^2); 
 x=(atan2(Y,X)+pi)/(pi*2);
 y=Z./d;
 
