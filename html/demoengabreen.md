@@ -61,16 +61,15 @@ camA=camera(cameralocation,size(A),[200 0 0]*pi/180,f); %loooking west
 [camA,rmse,aic]=camA.optimizecam(gcpA(:,1:3),gcpA(:,4:5),'00000111110010000000');
 fprintf('reprojectionerror=%3.1fpx  AIC:%4.0f\n',rmse,aic)
 
-
 %Visually compare the projection of the GCPs with the pixel coords:
 figure
 axes('position',[0 .1 1 .8]); hold on
 image(A)
-axis equal off ij
+axis equal off ij tight
 hold on
 uv=camA.project(gcpA(:,1:3));
-plot(gcpA(:,4),gcpA(:,5),'+',uv(:,1),uv(:,2),'rx')
-legend('UV of GCP','projection of GCPs','location','southoutside')
+h=plot(gcpA(:,4),gcpA(:,5),'+',uv(:,1),uv(:,2),'rx');
+legend(h,'UV of GCP','projection of GCPs','location','southoutside')
 title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 ```
 
@@ -128,32 +127,16 @@ DeltaViewDirection =
 ```
     
 
-Viewshed from camera
-----------------------------------------------------------
-
-The viewshed is all the points of the dem that are visible from the camera location. They may not be in the field of view of the lens.
-
-```matlab
-dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
-
-% show the viewshed by shading the dem.rgb image.
-figure
-title('Viewshed of DEM (i.e. potentially visible from camera location)')
-image(dem.x,dem.y,bsxfun(@times,double(dem.rgb)/255,(0.3+0.7*dem.visible)))
-axis equal xy off
-hold on
-plot(camA.xyz(1),camA.xyz(2),'r+')
-```
-
-![IMAGE](demoengabreen_02.png)
-
-
 Generate a set of points to be tracked between images
 ----------------------------------------------------------
 
    + Generate a regular grid of candidate points in world coordinates.
    + Cull the set of candidate points to those that are visible and glaciated
 ```matlab
+% The viewshed is all the points of the dem that are visible from the
+% camera location. They may not be in the field of view of the lens.
+dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
+
 [X,Y]=meshgrid(min(dem.x):50:max(dem.x),min(dem.y):50:max(dem.y));%make a 50m grid
 keepers=double(dem.visible&dem.mask); %visible & glaciated dem points
 keepers=filter2(ones(11)/(11^2),keepers); %throw away points close to the edge of visibility
@@ -192,7 +175,7 @@ uvB=uvA+[du dv];
 signal2noise=C./Cnoise;
 ```
 
-![IMAGE](demoengabreen_03.png)
+![IMAGE](demoengabreen_02.png)
 
 
 Georeference tracked points
@@ -220,7 +203,7 @@ plot(camA.xyz(1),camA.xyz(2),'r+')
 title('Velocity in metres per day')
 ```
 
-![IMAGE](demoengabreen_04.png)
+![IMAGE](demoengabreen_03.png)
 
 
 Project velocity onto downhill slope direction
@@ -255,4 +238,4 @@ plot(camA.xyz(1),camA.xyz(2),'r+')
 title('Velocity along slope direction in metres per day')
 ```
 
-![IMAGE](demoengabreen_05.png)
+![IMAGE](demoengabreen_04.png)

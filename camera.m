@@ -150,6 +150,7 @@ classdef camera
             xy=bsxfun(@rdivide,xyz(:,1:2),xyz(:,3));
             if any(cam.k~=0)||any(cam.p~=0) %TODO:optimize further
                 r2=sum(xy.^2,2);
+                r2(r2>4)=4;
                 if any(cam.k(3:6)~=0)
                     a=(1+cam.k(1)*r2+cam.k(2)*r2.^2+cam.k(3)*r2.^3)./(1+cam.k(4)*r2+cam.k(5)*r2.^2+cam.k(6)*r2.^3);
                 else

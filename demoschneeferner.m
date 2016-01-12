@@ -10,20 +10,14 @@
 %
 % Note this example needs the matlab mapping toolbox for loading the DEM.
 
-
+close all
 %load data
 datafolder=downloadDemoData('practise');
 A=imread(fullfile(datafolder,'ufs20110511_0815_4dot5Mpx.jpg'));
 gcpA=load(fullfile(datafolder,'GCPortho6_4dot5Mpx.txt'));
-
-%We load the DEM as a matfile to avoid mapping-toolbox dependency. 
 load(fullfile(datafolder,'dem30m.mat'));
-%[dem,R]=arcgridread(fullfile(datafolder,'dem_30m.txt'));
-%[x,y]=pixcenters(R,size(dem));
 
-[X,Y]=meshgrid(x,y);
-
-
+[X,Y]=meshgrid(x,y); 
 
 %camera location as given in practise:
 camxyz=[649299.97, 5253358.26]; 
@@ -48,17 +42,23 @@ fprintf('reprojectionerror=%3.1fpx  AIC:%4.0f\n',rmse,aic)
 
 %visualize the output
 image(A)
-axis equal off
+axis equal off tight
 hold on
+
+%project the DEM onto the camera plane
 [uvDEM,~,inframe]=camA.project([X(:),Y(:),dem(:)]);
 
-%only plot the points of the DEM that are visible from the camera:
+%Hide DEM points that are not visible from the camera:
 vis=voxelviewshed(X,Y,dem,camA.xyz);
-uvDEM=uvDEM(inframe&vis(:),:);
-plot(uvDEM(:,1),uvDEM(:,2),'c.','markersize',5)
+uvDEM(~(inframe&vis(:)),:)=nan;
 
+%show DEM as a mesh with labelled contours on top. 
+mesh(reshape(uvDEM(:,1),size(dem)),reshape(uvDEM(:,2),size(dem)),dem*0,'facecolor','none','edgecolor',[.7 .7 1]*.7)
+[c,h]=contour(reshape(uvDEM(:,1),size(dem)),reshape(uvDEM(:,2),size(dem)),dem,[2600:50:3000],'k');
+clabel(c,h)
 
+%Show GCPs and reprojected GCPs
 uvGCP=camA.project(gcpA(:,1:3));
-plot(gcpA(:,4),gcpA(:,5),'+',uvGCP(:,1),uvGCP(:,2),'rx')
-legend('30m DEM','UV of GCP','projection of GCPs','location','south')
+h=plot(uvGCP(:,1),uvGCP(:,2),'ro',gcpA(:,4),gcpA(:,5),'m*','markerfacecolor','w')
+legend(h([2 1]),'UV of GCP','projection of GCPs','location','northeast')
 title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))

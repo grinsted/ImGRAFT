@@ -66,7 +66,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Feature tracking example</a></li><li><a href="#2">Setup file locations and load images &amp; data</a></li><li><a href="#3">Determine camera parameters for image A</a></li><li><a href="#4">Determine view direction of camera B.</a></li><li><a href="#5">Viewshed from camera</a></li><li><a href="#6">Generate a set of points to be tracked between images</a></li><li><a href="#7">Track points between images.</a></li><li><a href="#8">Georeference tracked points</a></li><li><a href="#9">Project velocity onto downhill slope direction</a></li></ul></div><h2>Feature tracking example<a name="1"></a></h2><p>This is a complete example of feature tracking on Engabreen.</p><div><ol><li>Load images &amp; data</li><li>Use GCPs to determine camera view direction and lens distortion   parameters of image A.</li><li>track stable rock features to determine camera shake and infer view direction   of image B</li><li>Pre-process DEM by filling crevasses.</li><li>Track ice motion between images</li><li>Georeference tracked points and calculate real world velocities.</li></ol></div><pre class="codeinput">close <span class="string">all</span>
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Feature tracking example</a></li><li><a href="#2">Setup file locations and load images &amp; data</a></li><li><a href="#3">Determine camera parameters for image A</a></li><li><a href="#4">Determine view direction of camera B.</a></li><li><a href="#5">Generate a set of points to be tracked between images</a></li><li><a href="#6">Track points between images.</a></li><li><a href="#7">Georeference tracked points</a></li><li><a href="#8">Project velocity onto downhill slope direction</a></li></ul></div><h2>Feature tracking example<a name="1"></a></h2><p>This is a complete example of feature tracking on Engabreen.</p><div><ol><li>Load images &amp; data</li><li>Use GCPs to determine camera view direction and lens distortion   parameters of image A.</li><li>track stable rock features to determine camera shake and infer view direction   of image B</li><li>Pre-process DEM by filling crevasses.</li><li>Track ice motion between images</li><li>Georeference tracked points and calculate real world velocities.</li></ol></div><pre class="codeinput">close <span class="string">all</span>
 </pre><h2>Setup file locations and load images &amp; data<a name="2"></a></h2><pre class="codeinput">idA=8902; idB=8937; <span class="comment">% image ids (/file numbers)</span>
 
 datafolder=<span class="string">'demos'</span>;
@@ -99,16 +99,15 @@ camA=camera(cameralocation,size(A),[200 0 0]*pi/180,f); <span class="comment">%l
 [camA,rmse,aic]=camA.optimizecam(gcpA(:,1:3),gcpA(:,4:5),<span class="string">'00000111110010000000'</span>);
 fprintf(<span class="string">'reprojectionerror=%3.1fpx  AIC:%4.0f\n'</span>,rmse,aic)
 
-
 <span class="comment">%Visually compare the projection of the GCPs with the pixel coords:</span>
 figure
 axes(<span class="string">'position'</span>,[0 .1 1 .8]); hold <span class="string">on</span>
 image(A)
-axis <span class="string">equal</span> <span class="string">off</span> <span class="string">ij</span>
+axis <span class="string">equal</span> <span class="string">off</span> <span class="string">ij</span> <span class="string">tight</span>
 hold <span class="string">on</span>
 uv=camA.project(gcpA(:,1:3));
-plot(gcpA(:,4),gcpA(:,5),<span class="string">'+'</span>,uv(:,1),uv(:,2),<span class="string">'rx'</span>)
-legend(<span class="string">'UV of GCP'</span>,<span class="string">'projection of GCPs'</span>,<span class="string">'location'</span>,<span class="string">'southoutside'</span>)
+h=plot(gcpA(:,4),gcpA(:,5),<span class="string">'+'</span>,uv(:,1),uv(:,2),<span class="string">'rx'</span>);
+legend(h,<span class="string">'UV of GCP'</span>,<span class="string">'projection of GCPs'</span>,<span class="string">'location'</span>,<span class="string">'southoutside'</span>)
 title(sprintf(<span class="string">'Projection of ground control points. RMSE=%.1fpx'</span>,rmse))
 </pre><pre class="codeoutput">reprojectionerror=5.1px  AIC: 155
 </pre><img vspace="5" hspace="5" src="demoengabreen_01.png" alt=""> <h2>Determine view direction of camera B.<a name="4"></a></h2><div><ol><li>find movement of rock features between images A and B</li><li>determine camera B by pertubing viewdir of camera A.</li></ol></div><pre class="codeinput"><span class="comment">% First get an approximate estimate of the image shift using a single large</span>
@@ -144,16 +143,11 @@ rmse =
       0.40578
 DeltaViewDirection =
       0.12634     0.017583     0.015243
-</pre><h2>Viewshed from camera<a name="5"></a></h2><p>The viewshed is all the points of the dem that are visible from the camera location. They may not be in the field of view of the lens.</p><pre class="codeinput">dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
+</pre><h2>Generate a set of points to be tracked between images<a name="5"></a></h2><div><ol><li>Generate a regular grid of candidate points in world coordinates.</li><li>Cull the set of candidate points to those that are visible and glaciated</li></ol></div><pre class="codeinput"><span class="comment">% The viewshed is all the points of the dem that are visible from the</span>
+<span class="comment">% camera location. They may not be in the field of view of the lens.</span>
+dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
 
-<span class="comment">% show the viewshed by shading the dem.rgb image.</span>
-figure
-title(<span class="string">'Viewshed of DEM (i.e. potentially visible from camera location)'</span>)
-image(dem.x,dem.y,bsxfun(@times,double(dem.rgb)/255,(0.3+0.7*dem.visible)))
-axis <span class="string">equal</span> <span class="string">xy</span> <span class="string">off</span>
-hold <span class="string">on</span>
-plot(camA.xyz(1),camA.xyz(2),<span class="string">'r+'</span>)
-</pre><img vspace="5" hspace="5" src="demoengabreen_02.png" alt=""> <h2>Generate a set of points to be tracked between images<a name="6"></a></h2><div><ol><li>Generate a regular grid of candidate points in world coordinates.</li><li>Cull the set of candidate points to those that are visible and glaciated</li></ol></div><pre class="codeinput">[X,Y]=meshgrid(min(dem.x):50:max(dem.x),min(dem.y):50:max(dem.y));<span class="comment">%make a 50m grid</span>
+[X,Y]=meshgrid(min(dem.x):50:max(dem.x),min(dem.y):50:max(dem.y));<span class="comment">%make a 50m grid</span>
 keepers=double(dem.visible&amp;dem.mask); <span class="comment">%visible &amp; glaciated dem points</span>
 keepers=filter2(ones(11)/(11^2),keepers); <span class="comment">%throw away points close to the edge of visibility</span>
 keepers=interp2(dem.X,dem.Y,keepers,X(:),Y(:))&gt;.99; <span class="comment">%which candidate points fullfill the criteria.</span>
@@ -163,7 +157,7 @@ xyzA=xyzA(inframe,:); <span class="comment">%cull points outside the camera fiel
 uvA=uvA(inframe,:); <span class="comment">%round because template match only works with integer pixel coords</span>
 uvA(end+1,:)=[2275 1342]; <span class="comment">%add a non-glaciated point to test for residual camera movement (here a tunnel entrance)</span>
 <span class="comment">%Note xyzA no longer corresponds exactly to uvA because of the rounding.</span>
-</pre><h2>Track points between images.<a name="7"></a></h2><pre class="codeinput"><span class="comment">% calculate where points would be in image B if no ice motion.</span>
+</pre><h2>Track points between images.<a name="6"></a></h2><pre class="codeinput"><span class="comment">% calculate where points would be in image B if no ice motion.</span>
 <span class="comment">% ( i.e. accounting only for camera shake)</span>
 camshake=camB.project(camA.invproject(uvA))-uvA;
 
@@ -182,7 +176,7 @@ uvA=[pu pv]; <span class="comment">%the centers of the templates may have been r
 
 uvB=uvA+[du dv];
 signal2noise=C./Cnoise;
-</pre><img vspace="5" hspace="5" src="demoengabreen_03.png" alt=""> <h2>Georeference tracked points<a name="8"></a></h2><p>... and calculate velocities</p><pre class="codeinput">xyzA=camA.invproject(uvA,dem.X,dem.Y,dem.filled); <span class="comment">% has to be recalculated because uvA has been rounded.</span>
+</pre><img vspace="5" hspace="5" src="demoengabreen_02.png" alt=""> <h2>Georeference tracked points<a name="7"></a></h2><p>... and calculate velocities</p><pre class="codeinput">xyzA=camA.invproject(uvA,dem.X,dem.Y,dem.filled); <span class="comment">% has to be recalculated because uvA has been rounded.</span>
 xyzB=camB.invproject(uvB,dem.X,dem.Y,dem.filled-dem.mask*22.75*(tB-tA)/365); <span class="comment">% impose a thinning of the DEM of 23m/yr between images.</span>
 V=(xyzB-xyzA)./(tB-tA); <span class="comment">% 3d velocity.</span>
 
@@ -199,7 +193,7 @@ colormap <span class="string">jet</span>
 hcb=colorbar(<span class="string">'southoutside'</span>);
 plot(camA.xyz(1),camA.xyz(2),<span class="string">'r+'</span>)
 title(<span class="string">'Velocity in metres per day'</span>)
-</pre><img vspace="5" hspace="5" src="demoengabreen_04.png" alt=""> <h2>Project velocity onto downhill slope direction<a name="9"></a></h2><p>---- The largest error in the velocities will along the view direction vector. By projecting to the slope direction we strongly suppress errors arising from this.</p><pre class="codeinput">[gradX,gradY]=gradient(dem.filled,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
+</pre><img vspace="5" hspace="5" src="demoengabreen_03.png" alt=""> <h2>Project velocity onto downhill slope direction<a name="8"></a></h2><p>---- The largest error in the velocities will along the view direction vector. By projecting to the slope direction we strongly suppress errors arising from this.</p><pre class="codeinput">[gradX,gradY]=gradient(dem.filled,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
 gradN=sqrt(gradX.^2+gradY.^2);
 gradX=-gradX./gradN;gradY=-gradY./gradN;
 gradX=interp2(dem.X,dem.Y,gradX,xyzA(:,1),xyzA(:,2));
@@ -223,7 +217,7 @@ hcb=colorbar(<span class="string">'southoutside'</span>);
 
 plot(camA.xyz(1),camA.xyz(2),<span class="string">'r+'</span>)
 title(<span class="string">'Velocity along slope direction in metres per day'</span>)
-</pre><img vspace="5" hspace="5" src="demoengabreen_05.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="demoengabreen_04.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Feature tracking example
 %   
@@ -286,17 +280,19 @@ camA=camera(cameralocation,size(A),[200 0 0]*pi/180,f); %loooking west
 [camA,rmse,aic]=camA.optimizecam(gcpA(:,1:3),gcpA(:,4:5),'00000111110010000000');
 fprintf('reprojectionerror=%3.1fpx  AIC:%4.0f\n',rmse,aic) 
 
-
 %Visually compare the projection of the GCPs with the pixel coords:
 figure
 axes('position',[0 .1 1 .8]); hold on
 image(A)
-axis equal off ij
+axis equal off ij tight
 hold on
 uv=camA.project(gcpA(:,1:3));
-plot(gcpA(:,4),gcpA(:,5),'+',uv(:,1),uv(:,2),'rx')
-legend('UV of GCP','projection of GCPs','location','southoutside')
+h=plot(gcpA(:,4),gcpA(:,5),'+',uv(:,1),uv(:,2),'rx');
+legend(h,'UV of GCP','projection of GCPs','location','southoutside')
 title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
+
+
+
 
 
 %% Determine view direction of camera B.
@@ -332,18 +328,6 @@ rmse
 DeltaViewDirection=(camB.viewdir-camA.viewdir)*180/pi 
 
 
-%% Viewshed from camera
-% The viewshed is all the points of the dem that are visible from the
-% camera location. They may not be in the field of view of the lens. 
-dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
-
-% show the viewshed by shading the dem.rgb image.
-figure
-title('Viewshed of DEM (i.e. potentially visible from camera location)')
-image(dem.x,dem.y,bsxfun(@times,double(dem.rgb)/255,(0.3+0.7*dem.visible)))
-axis equal xy off
-hold on
-plot(camA.xyz(1),camA.xyz(2),'r+')
 
 %% Generate a set of points to be tracked between images
 %
@@ -351,6 +335,10 @@ plot(camA.xyz(1),camA.xyz(2),'r+')
 % # Cull the set of candidate points to those that are visible and glaciated 
 %
 %
+
+% The viewshed is all the points of the dem that are visible from the
+% camera location. They may not be in the field of view of the lens. 
+dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
 
 [X,Y]=meshgrid(min(dem.x):50:max(dem.x),min(dem.y):50:max(dem.y));%make a 50m grid
 keepers=double(dem.visible&dem.mask); %visible & glaciated dem points 
