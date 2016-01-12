@@ -37,14 +37,7 @@ colorbar('eastoutside');
 ```
 
 ```
-Elapsed time is 1.534835 seconds.
-h = 
-  Image with properties:
-
-           CData: [512x512x3 uint8]
-    CDataMapping: 'scaled'
-
-  Use GET to show all properties
+Elapsed time is 1.559898 seconds.
 
 ```
     

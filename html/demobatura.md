@@ -52,15 +52,4 @@ caxis([0 200])
 colorbar('southoutside');
 ```
 
-```
-h = 
-  Image with properties:
-
-           CData: [1720x2811x3 uint8]
-    CDataMapping: 'scaled'
-
-  Use GET to show all properties
-
-```
-    
 ![IMAGE](demobatura_01.png)

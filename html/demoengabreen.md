@@ -220,17 +220,6 @@ plot(camA.xyz(1),camA.xyz(2),'r+')
 title('Velocity in metres per day')
 ```
 
-```
-h = 
-  Image with properties:
-
-           CData: [590x507x3 uint8]
-    CDataMapping: 'scaled'
-
-  Use GET to show all properties
-
-```
-    
 ![IMAGE](demoengabreen_04.png)
 
 
@@ -266,15 +255,4 @@ plot(camA.xyz(1),camA.xyz(2),'r+')
 title('Velocity along slope direction in metres per day')
 ```
 
-```
-h = 
-  Image with properties:
-
-           CData: [590x507x3 uint8]
-    CDataMapping: 'scaled'
-
-  Use GET to show all properties
-
-```
-    
 ![IMAGE](demoengabreen_05.png)

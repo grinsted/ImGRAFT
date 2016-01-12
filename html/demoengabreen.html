@@ -199,13 +199,6 @@ colormap <span class="string">jet</span>
 hcb=colorbar(<span class="string">'southoutside'</span>);
 plot(camA.xyz(1),camA.xyz(2),<span class="string">'r+'</span>)
 title(<span class="string">'Velocity in metres per day'</span>)
-</pre><pre class="codeoutput">h = 
-  Image with properties:
-
-           CData: [590x507x3 uint8]
-    CDataMapping: 'scaled'
-
-  Use GET to show all properties
 </pre><img vspace="5" hspace="5" src="demoengabreen_04.png" alt=""> <h2>Project velocity onto downhill slope direction<a name="9"></a></h2><p>---- The largest error in the velocities will along the view direction vector. By projecting to the slope direction we strongly suppress errors arising from this.</p><pre class="codeinput">[gradX,gradY]=gradient(dem.filled,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
 gradN=sqrt(gradX.^2+gradY.^2);
 gradX=-gradX./gradN;gradY=-gradY./gradN;
@@ -230,13 +223,6 @@ hcb=colorbar(<span class="string">'southoutside'</span>);
 
 plot(camA.xyz(1),camA.xyz(2),<span class="string">'r+'</span>)
 title(<span class="string">'Velocity along slope direction in metres per day'</span>)
-</pre><pre class="codeoutput">h = 
-  Image with properties:
-
-           CData: [590x507x3 uint8]
-    CDataMapping: 'scaled'
-
-  Use GET to show all properties
 </pre><img vspace="5" hspace="5" src="demoengabreen_05.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Feature tracking example
