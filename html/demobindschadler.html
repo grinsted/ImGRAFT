@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Bindschadler Ice Stream example</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-10-22"><meta name="DC.source" content="demobindschadler.m"><style type="text/css">
+      --><title>Bindschadler Ice Stream example</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-01-12"><meta name="DC.source" content="demobindschadler.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -70,24 +70,38 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 A=imread(fullfile(datafolder,<span class="string">'conv_87.png'</span>));
 B=imread(fullfile(datafolder,<span class="string">'conv_89.png'</span>));
+dx=28.5; <span class="comment">%m/pixel</span>
+dt=2; <span class="comment">%years</span>
+x=(0:size(A,2)-1)*dx;
+y=(size(A,2)-1:-1:0)*dx;
 
 tic
 [du,dv,C,Cnoise,pu,pv]=templatematch(A,B);
 toc
 
+<span class="comment">%obtain corresponding map coordinates of pixel coordinates in pu,pv</span>
+px=interp1(x,pu); py=interp1(y,pv);
+
+<span class="comment">%display figure</span>
 close <span class="string">all</span>
-image(repmat(A,[1 1 3]),<span class="string">'CDataMapping'</span>,<span class="string">'scaled'</span>) <span class="comment">%the cdatamapping is a workaround for a bug in R2014+)</span>
-axis <span class="string">equal</span> <span class="string">off</span> <span class="string">tight</span> <span class="string">ij</span>
+showimg(x,y,A)
 hold <span class="string">on</span>
 signal2noise=C./Cnoise;
 keep=(signal2noise&gt;3.5);
-V=(du+dv*1i)*28.5/2; <span class="comment">%m/yr - Using imaginary values to indicate direction (for convenience).</span>
+V=(du-dv*1i)*dx/dt; <span class="comment">%Using imaginary values to indicate direction (for convenience).</span>
 Vn=abs(V);
-alphawarp(pu,pv,Vn,.2+keep*.5)
-quiver(pu(keep),pv(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,<span class="string">'k'</span>) <span class="comment">%arrows show direction.</span>
+alphawarp(px,py,Vn,.2+keep*.5)
+quiver(px(keep),py(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,<span class="string">'k'</span>) <span class="comment">%arrows show direction.</span>
 caxis([0 400])
 colorbar(<span class="string">'eastoutside'</span>);
-</pre><pre class="codeoutput">Elapsed time is 1.761135 seconds.
+</pre><pre class="codeoutput">Elapsed time is 1.697322 seconds.
+h = 
+  Image with properties:
+
+           CData: [512x512x3 uint8]
+    CDataMapping: 'scaled'
+
+  Use GET to show all properties
 </pre><img vspace="5" hspace="5" src="demobindschadler_01.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Bindschadler Ice Stream example
@@ -102,21 +116,28 @@ datafolder=downloadDemoData('imcorr');
 
 A=imread(fullfile(datafolder,'conv_87.png'));
 B=imread(fullfile(datafolder,'conv_89.png'));
+dx=28.5; %m/pixel
+dt=2; %years
+x=(0:size(A,2)-1)*dx;
+y=(size(A,2)-1:-1:0)*dx;
 
 tic
 [du,dv,C,Cnoise,pu,pv]=templatematch(A,B);
 toc
 
+%obtain corresponding map coordinates of pixel coordinates in pu,pv
+px=interp1(x,pu); py=interp1(y,pv);
+
+%display figure
 close all
-image(repmat(A,[1 1 3]),'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014+)
-axis equal off tight ij
+showimg(x,y,A)
 hold on
 signal2noise=C./Cnoise;
 keep=(signal2noise>3.5);
-V=(du+dv*1i)*28.5/2; %m/yr - Using imaginary values to indicate direction (for convenience).
+V=(du-dv*1i)*dx/dt; %Using imaginary values to indicate direction (for convenience).
 Vn=abs(V);
-alphawarp(pu,pv,Vn,.2+keep*.5)
-quiver(pu(keep),pv(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,'k') %arrows show direction. 
+alphawarp(px,py,Vn,.2+keep*.5)
+quiver(px(keep),py(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,'k') %arrows show direction. 
 caxis([0 400])
 colorbar('eastoutside');
 

@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>demoengabreen</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-10-22"><meta name="DC.source" content="demoengabreen.m"><style type="text/css">
+      --><title>demoengabreen</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-01-12"><meta name="DC.source" content="demoengabreen.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,7 +66,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Feature tracking example</a></li><li><a href="#2">Setup file locations and load images &amp; data</a></li><li><a href="#3">Determine camera parameters for image A</a></li><li><a href="#4">Determine view direction of camera B.</a></li><li><a href="#5">Prepare DEM by filling crevasses.</a></li><li><a href="#6">Viewshed from camera</a></li><li><a href="#7">Generate a set of points to be tracked between images</a></li><li><a href="#8">Track points between images.</a></li><li><a href="#9">Georeference tracked points</a></li></ul></div><h2>Feature tracking example<a name="1"></a></h2><p>This is a complete example of feature tracking on Engabreen.</p><div><ol><li>Load images &amp; data</li><li>Use GCPs to determine camera view direction and lens distortion   parameters of image A.</li><li>track stable rock features to determine camera shake and infer view direction   of image B</li><li>Pre-process DEM by filling crevasses.</li><li>Track ice motion between images</li><li>Georeference tracked points and calculate real world velocities.</li></ol></div><pre class="codeinput">close <span class="string">all</span>
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Feature tracking example</a></li><li><a href="#2">Setup file locations and load images &amp; data</a></li><li><a href="#3">Determine camera parameters for image A</a></li><li><a href="#4">Determine view direction of camera B.</a></li><li><a href="#5">Viewshed from camera</a></li><li><a href="#6">Generate a set of points to be tracked between images</a></li><li><a href="#7">Track points between images.</a></li><li><a href="#8">Georeference tracked points</a></li><li><a href="#9">Project velocity onto downhill slope direction</a></li></ul></div><h2>Feature tracking example<a name="1"></a></h2><p>This is a complete example of feature tracking on Engabreen.</p><div><ol><li>Load images &amp; data</li><li>Use GCPs to determine camera view direction and lens distortion   parameters of image A.</li><li>track stable rock features to determine camera shake and infer view direction   of image B</li><li>Pre-process DEM by filling crevasses.</li><li>Track ice motion between images</li><li>Georeference tracked points and calculate real world velocities.</li></ol></div><pre class="codeinput">close <span class="string">all</span>
 </pre><h2>Setup file locations and load images &amp; data<a name="2"></a></h2><pre class="codeinput">idA=8902; idB=8937; <span class="comment">% image ids (/file numbers)</span>
 
 datafolder=<span class="string">'demos'</span>;
@@ -102,83 +102,58 @@ fprintf(<span class="string">'reprojectionerror=%3.1fpx  AIC:%4.0f\n'</span>,rms
 
 <span class="comment">%Visually compare the projection of the GCPs with the pixel coords:</span>
 figure
+axes(<span class="string">'position'</span>,[0 .1 1 .8]); hold <span class="string">on</span>
 image(A)
-axis <span class="string">equal</span> <span class="string">off</span>
+axis <span class="string">equal</span> <span class="string">off</span> <span class="string">ij</span>
 hold <span class="string">on</span>
 uv=camA.project(gcpA(:,1:3));
 plot(gcpA(:,4),gcpA(:,5),<span class="string">'+'</span>,uv(:,1),uv(:,2),<span class="string">'rx'</span>)
-legend(<span class="string">'UV of GCP'</span>,<span class="string">'projection of GCPs'</span>)
+legend(<span class="string">'UV of GCP'</span>,<span class="string">'projection of GCPs'</span>,<span class="string">'location'</span>,<span class="string">'southoutside'</span>)
 title(sprintf(<span class="string">'Projection of ground control points. RMSE=%.1fpx'</span>,rmse))
 </pre><pre class="codeoutput">reprojectionerror=5.1px  AIC: 155
-</pre><img vspace="5" hspace="5" src="demoengabreen_01.png" alt=""> <h2>Determine view direction of camera B.<a name="4"></a></h2><div><ol><li>find movement of rock features between images A and B</li><li>determine camera B by pertubing viewdir of camera A.</li></ol></div><pre class="codeinput"><span class="comment">%First get an approximate estimate of the image shift using a single large</span>
-<span class="comment">%template</span>
-[duoffset,dvoffset]=templatematch(A,B,3000,995,<span class="string">'templatewidth'</span>,261,<span class="string">'searchwidth'</span>,400,<span class="string">'supersample'</span>,0.5,<span class="string">'showprogress'</span>,false) <span class="comment">%Note PC=PhaseCorrelation is still experimental.</span>
+</pre><img vspace="5" hspace="5" src="demoengabreen_01.png" alt=""> <h2>Determine view direction of camera B.<a name="4"></a></h2><div><ol><li>find movement of rock features between images A and B</li><li>determine camera B by pertubing viewdir of camera A.</li></ol></div><pre class="codeinput"><span class="comment">% First get an approximate estimate of the image shift using a single large</span>
+<span class="comment">% template</span>
+[duoffset,dvoffset]=templatematch(A,B,3000,995,<span class="string">'templatewidth'</span>,261,<span class="string">'searchwidth'</span>,400,<span class="string">'supersample'</span>,0.5,<span class="string">'showprogress'</span>,false)
 
-<span class="comment">%Get a whole bunch of image shift estimates using a grid of probe points.</span>
-<span class="comment">%Having multiple shift estimates will allow us to determine camera</span>
-<span class="comment">%rotation.</span>
+<span class="comment">% Get a whole bunch of image shift estimates using a grid of probe points.</span>
+<span class="comment">% Having multiple shift estimates will allow us to determine camera</span>
+<span class="comment">% rotation.</span>
 [pu,pv]=meshgrid(200:700:4000,100:400:1000);
 pu=pu(:); pv=pv(:)+pu/10;
-[du,dv,C]=templatematch(A,B,pu,pv,<span class="string">'templatewidth'</span>,61,<span class="string">'searchwidth'</span>,81,<span class="string">'supersample'</span>,3,<span class="string">'initialdu'</span>,duoffset,<span class="string">'initialdv'</span>,dvoffset,<span class="string">'showprogress'</span>,[idA idB]);
+
+[du,dv,C]=templatematch(A,B,pu,pv,<span class="string">'templatewidth'</span>,61,<span class="string">'searchwidth'</span>,81,<span class="string">'supersample'</span>,3,<span class="string">'initialdu'</span>,duoffset,<span class="string">'initialdv'</span>,dvoffset);
 
 
-<span class="comment">%Determine camera rotation between A and B from the set of image</span>
-<span class="comment">%shifts.</span>
+<span class="comment">% Determine camera rotation between A and B from the set of image</span>
+<span class="comment">% shifts.</span>
 
-<span class="comment">%find 3d coords consistent with the 2d pixel coords in points.</span>
+<span class="comment">% find 3d coords consistent with the 2d pixel coords in points.</span>
 xyz=camA.invproject([pu pv]);
-<span class="comment">%the projection of xyz has to match the shifted coords in points+dxy:</span>
+<span class="comment">% the projection of xyz has to match the shifted coords in points+dxy:</span>
+
 [camB,rmse]=camA.optimizecam(xyz,[pu+du pv+dv],<span class="string">'00000111000000000000'</span>); <span class="comment">%optimize 3 view direction angles to determine camera B.</span>
 rmse
 
-
-<span class="comment">%quantify the shift between A and B in terms of an angle.</span>
+<span class="comment">%quantify the shift between A and B in terms of an delta angle.</span>
 DeltaViewDirection=(camB.viewdir-camA.viewdir)*180/pi
 </pre><pre class="codeoutput">duoffset =
-       13.609
+       13.679
 dvoffset =
-      -1.1824
+      -1.2433
 rmse =
-      0.40786
+      0.40578
 DeltaViewDirection =
-      0.12636     0.017638     0.015366
-</pre><img vspace="5" hspace="5" src="demoengabreen_02.png" alt=""> <h2>Prepare DEM by filling crevasses.<a name="5"></a></h2><p>The matches between images are often visual features such as the sharp contrast between the ice surface and shadow in a crevasse. The visual edge of such features are located on the crevasse tops and we use a smooth dem surface tracking through the crevasse tops when mapping feature pixel coordinates to world coordinates.</p><pre class="codeinput"><span class="comment">%Apply a local averaging smooth to the DEM:</span>
-<span class="comment">%large crevasses are ~40m wide. The filter has to be wide enough to bridge</span>
-<span class="comment">%crevasses.</span>
-sig=10; <span class="comment">% standard deviation / spatial width of filter</span>
-fgauss=exp(-.5*((-sig*1.5:sig*1.5)/sig).^2); <span class="comment">%a gaussian filter.</span>
-fgauss=fgauss'*fgauss; <span class="comment">%2d-gaussian. You can use fspecial('gaussian',...) if you have the image processing toolbox</span>
-dem.smoothed=filter2(fgauss/sum(fgauss(:)),dem.Z-800)+800; <span class="comment">%imfilter with replicate same is better at edges.</span>
+      0.12634     0.017583     0.015243
+</pre><h2>Viewshed from camera<a name="5"></a></h2><p>The viewshed is all the points of the dem that are visible from the camera location. They may not be in the field of view of the lens.</p><pre class="codeinput">dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
 
-<span class="comment">% Apply an extreme weighting local smooth to the deviation between the</span>
-<span class="comment">% sZ and Zmask (extract tops of crevasses):</span>
-fdisk=fgauss&gt;exp(-.5); <span class="comment">%alternatively use fspecial('disk',round(sigma)); instead</span>
-extremeweight=1.1;
-dem.filled=log(filter2(fdisk/sum(fdisk(:)),exp((dem.Z-dem.smoothed)*extremeweight)))/extremeweight;
-
-<span class="comment">%apply a post-smoothing to the jagged crevasse tops.</span>
-dem.filled=filter2(fgauss/sum(fgauss(:)),dem.filled);
-dem.filled=dem.filled+dem.smoothed;
-
-<span class="comment">%Add back non-glaciated areas to the crevasse filled surface.</span>
-dem.filled(~dem.mask)=dem.Z(~dem.mask);
-
-<span class="comment">%show a slice through the Original and crevasse filled DEM</span>
-<span class="comment">%Plots like these help choose an appropriate filter sizes.</span>
-figure
-plot(dem.x,dem.filled(400,:),dem.x,dem.Z(400,:),dem.x,dem.smoothed(400,:))
-legend(<span class="string">'crevasse filled'</span>,<span class="string">'original'</span>,<span class="string">'smoothed'</span>,<span class="string">'location'</span>,<span class="string">'best'</span>)
-title(<span class="string">'Slice through crevasse filled dem.'</span>)
-</pre><img vspace="5" hspace="5" src="demoengabreen_03.png" alt=""> <h2>Viewshed from camera<a name="6"></a></h2><p>The viewshed is all the points of the dem that are visible from the camera location. They may not be in the field of view of the lens.</p><pre class="codeinput">dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
-
-<span class="comment">%show the viewshed by shading the dem.rgb image.</span>
+<span class="comment">% show the viewshed by shading the dem.rgb image.</span>
 figure
 title(<span class="string">'Viewshed of DEM (i.e. potentially visible from camera location)'</span>)
 image(dem.x,dem.y,bsxfun(@times,double(dem.rgb)/255,(0.3+0.7*dem.visible)))
 axis <span class="string">equal</span> <span class="string">xy</span> <span class="string">off</span>
 hold <span class="string">on</span>
 plot(camA.xyz(1),camA.xyz(2),<span class="string">'r+'</span>)
-</pre><img vspace="5" hspace="5" src="demoengabreen_04.png" alt=""> <h2>Generate a set of points to be tracked between images<a name="7"></a></h2><div><ol><li>Generate a regular grid of candidate points in world coordinates.</li><li>Cull the set of candidate points to those that are visible and glaciated</li></ol></div><pre class="codeinput">[X,Y]=meshgrid(min(dem.x):50:max(dem.x),min(dem.y):50:max(dem.y));<span class="comment">%make a 50m grid</span>
+</pre><img vspace="5" hspace="5" src="demoengabreen_02.png" alt=""> <h2>Generate a set of points to be tracked between images<a name="6"></a></h2><div><ol><li>Generate a regular grid of candidate points in world coordinates.</li><li>Cull the set of candidate points to those that are visible and glaciated</li></ol></div><pre class="codeinput">[X,Y]=meshgrid(min(dem.x):50:max(dem.x),min(dem.y):50:max(dem.y));<span class="comment">%make a 50m grid</span>
 keepers=double(dem.visible&amp;dem.mask); <span class="comment">%visible &amp; glaciated dem points</span>
 keepers=filter2(ones(11)/(11^2),keepers); <span class="comment">%throw away points close to the edge of visibility</span>
 keepers=interp2(dem.X,dem.Y,keepers,X(:),Y(:))&gt;.99; <span class="comment">%which candidate points fullfill the criteria.</span>
@@ -188,7 +163,7 @@ xyzA=xyzA(inframe,:); <span class="comment">%cull points outside the camera fiel
 uvA=uvA(inframe,:); <span class="comment">%round because template match only works with integer pixel coords</span>
 uvA(end+1,:)=[2275 1342]; <span class="comment">%add a non-glaciated point to test for residual camera movement (here a tunnel entrance)</span>
 <span class="comment">%Note xyzA no longer corresponds exactly to uvA because of the rounding.</span>
-</pre><h2>Track points between images.<a name="8"></a></h2><pre class="codeinput"><span class="comment">% calculate where points would be in image B if no ice motion.</span>
+</pre><h2>Track points between images.<a name="7"></a></h2><pre class="codeinput"><span class="comment">% calculate where points would be in image B if no ice motion.</span>
 <span class="comment">% ( i.e. accounting only for camera shake)</span>
 camshake=camB.project(camA.invproject(uvA))-uvA;
 
@@ -207,15 +182,13 @@ uvA=[pu pv]; <span class="comment">%the centers of the templates may have been r
 
 uvB=uvA+[du dv];
 signal2noise=C./Cnoise;
-</pre><img vspace="5" hspace="5" src="demoengabreen_05.png" alt=""> <h2>Georeference tracked points<a name="9"></a></h2><p>... and calculate velocities</p><pre class="codeinput">xyzA=camA.invproject(uvA,dem.X,dem.Y,dem.filled); <span class="comment">%has to be recalculated because uvA has been rounded.</span>
-xyzB=camB.invproject(uvB,dem.X,dem.Y,dem.filled-dem.mask*22.75*(tB-tA)/365); <span class="comment">%impose a thinning of the DEM of 23m/yr between images.</span>
+</pre><img vspace="5" hspace="5" src="demoengabreen_03.png" alt=""> <h2>Georeference tracked points<a name="8"></a></h2><p>... and calculate velocities</p><pre class="codeinput">xyzA=camA.invproject(uvA,dem.X,dem.Y,dem.filled); <span class="comment">% has to be recalculated because uvA has been rounded.</span>
+xyzB=camB.invproject(uvB,dem.X,dem.Y,dem.filled-dem.mask*22.75*(tB-tA)/365); <span class="comment">% impose a thinning of the DEM of 23m/yr between images.</span>
 V=(xyzB-xyzA)./(tB-tA); <span class="comment">% 3d velocity.</span>
 
 
-<span class="comment">%plot candidate points on map view</span>
 figure;
-image(dem.x,dem.y,dem.rgb,<span class="string">'CDataMapping'</span>,<span class="string">'scaled'</span>) <span class="comment">%the cdatamapping is a workaround for a bug in R2014b.</span>
-axis <span class="string">equal</span> <span class="string">xy</span> <span class="string">off</span> <span class="string">tight</span>
+showimg(dem.x,dem.y,dem.rgb);
 hold <span class="string">on</span>
 Vn=sqrt(sum(V(:,1:2).^2,2));
 keep=signal2noise&gt;2&amp;C&gt;.7;
@@ -226,17 +199,14 @@ colormap <span class="string">jet</span>
 hcb=colorbar(<span class="string">'southoutside'</span>);
 plot(camA.xyz(1),camA.xyz(2),<span class="string">'r+'</span>)
 title(<span class="string">'Velocity in metres per day'</span>)
+</pre><pre class="codeoutput">h = 
+  Image with properties:
 
+           CData: [590x507x3 uint8]
+    CDataMapping: 'scaled'
 
-
-<span class="comment">%Project velocity onto downhill slope direction</span>
-<span class="comment">%----</span>
-<span class="comment">%The largest error in the velocities will along the view direction vector.</span>
-<span class="comment">%By projecting to the slope direction we strongly suppress errors arising</span>
-<span class="comment">%from this.</span>
-
-
-[gradX,gradY]=gradient(dem.smoothed,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
+  Use GET to show all properties
+</pre><img vspace="5" hspace="5" src="demoengabreen_04.png" alt=""> <h2>Project velocity onto downhill slope direction<a name="9"></a></h2><p>---- The largest error in the velocities will along the view direction vector. By projecting to the slope direction we strongly suppress errors arising from this.</p><pre class="codeinput">[gradX,gradY]=gradient(dem.filled,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
 gradN=sqrt(gradX.^2+gradY.^2);
 gradX=-gradX./gradN;gradY=-gradY./gradN;
 gradX=interp2(dem.X,dem.Y,gradX,xyzA(:,1),xyzA(:,2));
@@ -247,13 +217,12 @@ Vg=[Vgn.*gradX Vgn.*gradY];
 
 close <span class="string">all</span>
 figure
-image(dem.x,dem.y,dem.rgb,<span class="string">'CDataMapping'</span>,<span class="string">'scaled'</span>) <span class="comment">%the cdatamapping is a workaround for a bug in R2014b</span>
+showimg(dem.x,dem.y,dem.rgb);
 axis <span class="string">equal</span> <span class="string">xy</span> <span class="string">off</span> <span class="string">tight</span>
 
 hold <span class="string">on</span>
 scatter(xyzA(keep,1),xyzA(keep,2),300,Vgn(keep),<span class="string">'.'</span>)
 quiver(xyzA(keep,1),xyzA(keep,2),Vg(keep,1)./Vgn(keep),Vg(keep,2)./Vgn(keep),.2,<span class="string">'k'</span>)
-quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,<span class="string">'k'</span>,<span class="string">'color'</span>,[.5 .5 .5])
 
 caxis([0 1])
 colormap <span class="string">jet</span>
@@ -261,7 +230,14 @@ hcb=colorbar(<span class="string">'southoutside'</span>);
 
 plot(camA.xyz(1),camA.xyz(2),<span class="string">'r+'</span>)
 title(<span class="string">'Velocity along slope direction in metres per day'</span>)
-</pre><img vspace="5" hspace="5" src="demoengabreen_06.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+</pre><pre class="codeoutput">h = 
+  Image with properties:
+
+           CData: [590x507x3 uint8]
+    CDataMapping: 'scaled'
+
+  Use GET to show all properties
+</pre><img vspace="5" hspace="5" src="demoengabreen_05.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Feature tracking example
 %   
@@ -327,12 +303,13 @@ fprintf('reprojectionerror=%3.1fpx  AIC:%4.0f\n',rmse,aic)
 
 %Visually compare the projection of the GCPs with the pixel coords:
 figure
+axes('position',[0 .1 1 .8]); hold on
 image(A)
-axis equal off
+axis equal off ij
 hold on
 uv=camA.project(gcpA(:,1:3));
 plot(gcpA(:,4),gcpA(:,5),'+',uv(:,1),uv(:,2),'rx')
-legend('UV of GCP','projection of GCPs')
+legend('UV of GCP','projection of GCPs','location','southoutside')
 title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 
 
@@ -342,76 +319,39 @@ title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 % # determine camera B by pertubing viewdir of camera A. 
 
 
-%First get an approximate estimate of the image shift using a single large
-%template
-[duoffset,dvoffset]=templatematch(A,B,3000,995,'templatewidth',261,'searchwidth',400,'supersample',0.5,'showprogress',false) %Note PC=PhaseCorrelation is still experimental. 
+% First get an approximate estimate of the image shift using a single large
+% template
+[duoffset,dvoffset]=templatematch(A,B,3000,995,'templatewidth',261,'searchwidth',400,'supersample',0.5,'showprogress',false)
 
-%Get a whole bunch of image shift estimates using a grid of probe points.
-%Having multiple shift estimates will allow us to determine camera
-%rotation.
+% Get a whole bunch of image shift estimates using a grid of probe points.
+% Having multiple shift estimates will allow us to determine camera
+% rotation.
 [pu,pv]=meshgrid(200:700:4000,100:400:1000);
 pu=pu(:); pv=pv(:)+pu/10; 
-[du,dv,C]=templatematch(A,B,pu,pv,'templatewidth',61,'searchwidth',81,'supersample',3,'initialdu',duoffset,'initialdv',dvoffset,'showprogress',[idA idB]);
+
+[du,dv,C]=templatematch(A,B,pu,pv,'templatewidth',61,'searchwidth',81,'supersample',3,'initialdu',duoffset,'initialdv',dvoffset);
 
 
-%Determine camera rotation between A and B from the set of image
-%shifts.
+% Determine camera rotation between A and B from the set of image
+% shifts.
 
-%find 3d coords consistent with the 2d pixel coords in points.
+% find 3d coords consistent with the 2d pixel coords in points.
 xyz=camA.invproject([pu pv]);
-%the projection of xyz has to match the shifted coords in points+dxy:
+% the projection of xyz has to match the shifted coords in points+dxy:
+
 [camB,rmse]=camA.optimizecam(xyz,[pu+du pv+dv],'00000111000000000000'); %optimize 3 view direction angles to determine camera B. 
 rmse
 
-
-%quantify the shift between A and B in terms of an angle. 
+%quantify the shift between A and B in terms of an delta angle. 
 DeltaViewDirection=(camB.viewdir-camA.viewdir)*180/pi 
 
-
-%% Prepare DEM by filling crevasses.
-%
-%
-% The matches between images are often visual features such as
-% the sharp contrast between the ice surface and shadow in a
-% crevasse. The visual edge of such features are located on the crevasse
-% tops and we use a smooth dem surface tracking through the crevasse tops
-% when mapping feature pixel coordinates to world coordinates. 
-%
-
-%Apply a local averaging smooth to the DEM:
-%large crevasses are ~40m wide. The filter has to be wide enough to bridge
-%crevasses.
-sig=10; % standard deviation / spatial width of filter
-fgauss=exp(-.5*((-sig*1.5:sig*1.5)/sig).^2); %a gaussian filter.
-fgauss=fgauss'*fgauss; %2d-gaussian. You can use fspecial('gaussian',...) if you have the image processing toolbox
-dem.smoothed=filter2(fgauss/sum(fgauss(:)),dem.Z-800)+800; %imfilter with replicate same is better at edges. 
-
-% Apply an extreme weighting local smooth to the deviation between the
-% sZ and Zmask (extract tops of crevasses):
-fdisk=fgauss>exp(-.5); %alternatively use fspecial('disk',round(sigma)); instead
-extremeweight=1.1;
-dem.filled=log(filter2(fdisk/sum(fdisk(:)),exp((dem.Z-dem.smoothed)*extremeweight)))/extremeweight;
-
-%apply a post-smoothing to the jagged crevasse tops.
-dem.filled=filter2(fgauss/sum(fgauss(:)),dem.filled);
-dem.filled=dem.filled+dem.smoothed;
-
-%Add back non-glaciated areas to the crevasse filled surface. 
-dem.filled(~dem.mask)=dem.Z(~dem.mask);
-
-%show a slice through the Original and crevasse filled DEM 
-%Plots like these help choose an appropriate filter sizes. 
-figure
-plot(dem.x,dem.filled(400,:),dem.x,dem.Z(400,:),dem.x,dem.smoothed(400,:))
-legend('crevasse filled','original','smoothed','location','best')
-title('Slice through crevasse filled dem.')
 
 %% Viewshed from camera
 % The viewshed is all the points of the dem that are visible from the
 % camera location. They may not be in the field of view of the lens. 
 dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
 
-%show the viewshed by shading the dem.rgb image.
+% show the viewshed by shading the dem.rgb image.
 figure
 title('Viewshed of DEM (i.e. potentially visible from camera location)')
 image(dem.x,dem.y,bsxfun(@times,double(dem.rgb)/255,(0.3+0.7*dem.visible)))
@@ -462,15 +402,13 @@ signal2noise=C./Cnoise;
 
 %% Georeference tracked points
 % ... and calculate velocities
-xyzA=camA.invproject(uvA,dem.X,dem.Y,dem.filled); %has to be recalculated because uvA has been rounded.
-xyzB=camB.invproject(uvB,dem.X,dem.Y,dem.filled-dem.mask*22.75*(tB-tA)/365); %impose a thinning of the DEM of 23m/yr between images.
+xyzA=camA.invproject(uvA,dem.X,dem.Y,dem.filled); % has to be recalculated because uvA has been rounded.
+xyzB=camB.invproject(uvB,dem.X,dem.Y,dem.filled-dem.mask*22.75*(tB-tA)/365); % impose a thinning of the DEM of 23m/yr between images.
 V=(xyzB-xyzA)./(tB-tA); % 3d velocity.
 
 
-%plot candidate points on map view
 figure;
-image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014b.
-axis equal xy off tight
+showimg(dem.x,dem.y,dem.rgb);
 hold on
 Vn=sqrt(sum(V(:,1:2).^2,2));
 keep=signal2noise>2&C>.7;
@@ -484,14 +422,14 @@ title('Velocity in metres per day')
 
 
 
-%Project velocity onto downhill slope direction
-%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
-%The largest error in the velocities will along the view direction vector.
-%By projecting to the slope direction we strongly suppress errors arising
-%from this. 
+%% Project velocity onto downhill slope direction
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% The largest error in the velocities will along the view direction vector.
+% By projecting to the slope direction we strongly suppress errors arising
+% from this. 
 
 
-[gradX,gradY]=gradient(dem.smoothed,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
+[gradX,gradY]=gradient(dem.filled,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
 gradN=sqrt(gradX.^2+gradY.^2);
 gradX=-gradX./gradN;gradY=-gradY./gradN;
 gradX=interp2(dem.X,dem.Y,gradX,xyzA(:,1),xyzA(:,2));
@@ -502,13 +440,12 @@ Vg=[Vgn.*gradX Vgn.*gradY];
 
 close all
 figure
-image(dem.x,dem.y,dem.rgb,'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014b
+showimg(dem.x,dem.y,dem.rgb);
 axis equal xy off tight
 
 hold on
 scatter(xyzA(keep,1),xyzA(keep,2),300,Vgn(keep),'.')
 quiver(xyzA(keep,1),xyzA(keep,2),Vg(keep,1)./Vgn(keep),Vg(keep,2)./Vgn(keep),.2,'k')
-quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,'k','color',[.5 .5 .5])
 
 caxis([0 1])
 colormap jet

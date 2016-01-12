@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Batura Glacier, Karakoram</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-10-22"><meta name="DC.source" content="demobatura.m"><style type="text/css">
+      --><title>Batura Glacier, Karakoram</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-01-12"><meta name="DC.source" content="demobatura.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -70,20 +70,18 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 <span class="comment">%%load data</span>
 <span class="comment">%</span>
-<span class="comment">% Here we use imread instead of geotiffread, to avoid having a dependency</span>
-<span class="comment">% between ImGRAFT and the mapping toolbox. But if you have the mapping toolbox</span>
-<span class="comment">% then I recommend loading the scenes using geoimread.m from here:</span>
-<span class="comment">% http://www.mathworks.com/matlabcentral/fileexchange/46904-geoimread</span>
+<span class="comment">%</span>
 
-A=imread(fullfile(datafolder,<span class="string">'batura_2001.tif'</span>));
-B=imread(fullfile(datafolder,<span class="string">'batura_2002.tif'</span>)); <span class="comment">%normally you would use geotiffread</span>
-x=(0:size(A,2)-1)*15+451357.50; <span class="comment">%if you have mapping toolbox then you would use pixcenters here.</span>
-y=(0:size(A,1)-1)*15+4060432.50;
-deltax=15;<span class="comment">%m/pixel</span>
+[A,x,y,Ia]=geoimread(fullfile(datafolder,<span class="string">'batura_2001.tif'</span>));
+[B,xb,yb,Ib]=geoimread(fullfile(datafolder,<span class="string">'batura_2002.tif'</span>));
+deltax=x(2)-x(1);<span class="comment">%m/pixel</span>
 
 
 <span class="comment">%make regular grid of points to track:</span>
-[pu,pv]=meshgrid(1:20:size(A,2),1:20:size(A,1));
+[pu,pv]=meshgrid(10:20:size(A,2),10:20:size(A,1)); <span class="comment">%pixel coordinated</span>
+
+<span class="comment">%obtain corresponding map coordinates of pixel coordinates</span>
+px=interp1(x,pu); py=interp1(y,pv);
 
 <span class="comment">%... but restricted to points inside this region of interest polygon</span>
 roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;<span class="keyword">...</span>
@@ -91,26 +89,32 @@ roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;<span class="keyword
      1061 1168;663 718;456 686;25 877;28 627;407 465];
 
 mask=inpolygon(pu,pv,roi(:,1),roi(:,2));
-punan=pu;
-punan(~mask)=nan; <span class="comment">%inserting nans at some locations will tell template match to skip these locations</span>
+pu(~mask)=nan; <span class="comment">%inserting nans at some locations will tell template match to skip these locations</span>
 
-[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,punan,pv,<span class="string">'showprogress'</span>,{<span class="string">'2001'</span> <span class="string">'2002'</span>});
+[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,<span class="string">'showprogress'</span>,{<span class="string">'2001'</span> <span class="string">'2002'</span>});
 close <span class="string">all</span>
 
 <span class="comment">%visualize the results</span>
 <span class="comment">%turn the intensity image into an RGB image</span>
 <span class="comment">%so that it does not interfere with colorbar:</span>
-image(repmat(A,[1 1 3]),<span class="string">'CDataMapping'</span>,<span class="string">'scaled'</span>) <span class="comment">%the cdatamapping is a workaround for a bug in R2014+</span>
-axis <span class="string">equal</span> <span class="string">off</span> <span class="string">tight</span> <span class="string">ij</span>
+
+showimg(x,y,A)
 hold <span class="string">on</span>
 signal2noise=C./Cnoise;
-keep=(signal2noise&gt;2.3)&amp;(C&gt;.65);
+keep=(signal2noise&gt;2)&amp;(C&gt;.6);
 V=(du+dv*1i)*deltax; <span class="comment">%m/yr</span>
 Vn=abs(V);
-alphawarp(pu,pv,Vn,.2*mask+keep*.5)
-quiver(pu(keep),pv(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,<span class="string">'k'</span>) <span class="comment">%arrows show direction.</span>
+alphawarp(px,py,Vn,.2+keep*.5)
+quiver(px(keep),py(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,<span class="string">'k'</span>) <span class="comment">%arrows show direction.</span>
 caxis([0 200])
 colorbar(<span class="string">'southoutside'</span>);
+</pre><pre class="codeoutput">h = 
+  Image with properties:
+
+           CData: [1720x2811x3 uint8]
+    CDataMapping: 'scaled'
+
+  Use GET to show all properties
 </pre><img vspace="5" hspace="5" src="demobatura_01.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Batura Glacier, Karakoram
@@ -127,20 +131,18 @@ datafolder=downloadDemoData('cias');
 
 %%load data
 %
-% Here we use imread instead of geotiffread, to avoid having a dependency
-% between ImGRAFT and the mapping toolbox. But if you have the mapping toolbox
-% then I recommend loading the scenes using geoimread.m from here:
-% http://www.mathworks.com/matlabcentral/fileexchange/46904-geoimread
+% 
 
-A=imread(fullfile(datafolder,'batura_2001.tif')); 
-B=imread(fullfile(datafolder,'batura_2002.tif')); %normally you would use geotiffread
-x=(0:size(A,2)-1)*15+451357.50; %if you have mapping toolbox then you would use pixcenters here. 
-y=(0:size(A,1)-1)*15+4060432.50;
-deltax=15;%m/pixel
+[A,x,y,Ia]=geoimread(fullfile(datafolder,'batura_2001.tif')); 
+[B,xb,yb,Ib]=geoimread(fullfile(datafolder,'batura_2002.tif')); 
+deltax=x(2)-x(1);%m/pixel
 
 
 %make regular grid of points to track:
-[pu,pv]=meshgrid(1:20:size(A,2),1:20:size(A,1));
+[pu,pv]=meshgrid(10:20:size(A,2),10:20:size(A,1)); %pixel coordinated
+
+%obtain corresponding map coordinates of pixel coordinates
+px=interp1(x,pu); py=interp1(y,pv);
 
 %... but restricted to points inside this region of interest polygon
 roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;...
@@ -148,26 +150,26 @@ roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;...
      1061 1168;663 718;456 686;25 877;28 627;407 465];
  
 mask=inpolygon(pu,pv,roi(:,1),roi(:,2));
-punan=pu; 
-punan(~mask)=nan; %inserting nans at some locations will tell template match to skip these locations
+pu(~mask)=nan; %inserting nans at some locations will tell template match to skip these locations
 
-[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,punan,pv,'showprogress',{'2001' '2002'});
+[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,'showprogress',{'2001' '2002'});
 close all
 
 %visualize the results
 %turn the intensity image into an RGB image
 %so that it does not interfere with colorbar:
-image(repmat(A,[1 1 3]),'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014+
-axis equal off tight ij
+
+showimg(x,y,A)
 hold on
 signal2noise=C./Cnoise;
-keep=(signal2noise>2.3)&(C>.65);
+keep=(signal2noise>2)&(C>.6);
 V=(du+dv*1i)*deltax; %m/yr
 Vn=abs(V);
-alphawarp(pu,pv,Vn,.2*mask+keep*.5)
-quiver(pu(keep),pv(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,'k') %arrows show direction. 
+alphawarp(px,py,Vn,.2+keep*.5)
+quiver(px(keep),py(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,'k') %arrows show direction. 
 caxis([0 200])
 colorbar('southoutside');
+
 
 ##### SOURCE END #####
 --></body></html>

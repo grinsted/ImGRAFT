@@ -12,20 +12,18 @@ datafolder=downloadDemoData('cias');
 
 %%load data
 %
-% Here we use imread instead of geotiffread, to avoid having a dependency
-% between ImGRAFT and the mapping toolbox. But if you have the mapping toolbox
-% then I recommend loading the scenes using geoimread.m from here:
-% http://www.mathworks.com/matlabcentral/fileexchange/46904-geoimread
+%
 
-A=imread(fullfile(datafolder,'batura_2001.tif'));
-B=imread(fullfile(datafolder,'batura_2002.tif')); %normally you would use geotiffread
-x=(0:size(A,2)-1)*15+451357.50; %if you have mapping toolbox then you would use pixcenters here.
-y=(0:size(A,1)-1)*15+4060432.50;
-deltax=15;%m/pixel
+[A,x,y,Ia]=geoimread(fullfile(datafolder,'batura_2001.tif'));
+[B,xb,yb,Ib]=geoimread(fullfile(datafolder,'batura_2002.tif'));
+deltax=x(2)-x(1);%m/pixel
 
 
 %make regular grid of points to track:
-[pu,pv]=meshgrid(1:20:size(A,2),1:20:size(A,1));
+[pu,pv]=meshgrid(10:20:size(A,2),10:20:size(A,1)); %pixel coordinated
+
+%obtain corresponding map coordinates of pixel coordinates
+px=interp1(x,pu); py=interp1(y,pv);
 
 %... but restricted to points inside this region of interest polygon
 roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;...
@@ -33,26 +31,36 @@ roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;...
      1061 1168;663 718;456 686;25 877;28 627;407 465];
 
 mask=inpolygon(pu,pv,roi(:,1),roi(:,2));
-punan=pu;
-punan(~mask)=nan; %inserting nans at some locations will tell template match to skip these locations
+pu(~mask)=nan; %inserting nans at some locations will tell template match to skip these locations
 
-[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,punan,pv,'showprogress',{'2001' '2002'});
+[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,'showprogress',{'2001' '2002'});
 close all
 
 %visualize the results
 %turn the intensity image into an RGB image
 %so that it does not interfere with colorbar:
-image(repmat(A,[1 1 3]),'CDataMapping','scaled') %the cdatamapping is a workaround for a bug in R2014+
-axis equal off tight ij
+
+showimg(x,y,A)
 hold on
 signal2noise=C./Cnoise;
-keep=(signal2noise>2.3)&(C>.65);
+keep=(signal2noise>2)&(C>.6);
 V=(du+dv*1i)*deltax; %m/yr
 Vn=abs(V);
-alphawarp(pu,pv,Vn,.2*mask+keep*.5)
-quiver(pu(keep),pv(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,'k') %arrows show direction.
+alphawarp(px,py,Vn,.2+keep*.5)
+quiver(px(keep),py(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,'k') %arrows show direction.
 caxis([0 200])
 colorbar('southoutside');
 ```
 
+```
+h = 
+  Image with properties:
+
+           CData: [1720x2811x3 uint8]
+    CDataMapping: 'scaled'
+
+  Use GET to show all properties
+
+```
+    
 ![IMAGE](demobatura_01.png)
