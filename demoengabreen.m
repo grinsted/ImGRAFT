@@ -119,6 +119,7 @@ DeltaViewDirection=(camB.viewdir-camA.viewdir)*180/pi
 % camera location. They may not be in the field of view of the lens. 
 dem.visible=voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
 
+
 [X,Y]=meshgrid(min(dem.x):50:max(dem.x),min(dem.y):50:max(dem.y));%make a 50m grid
 keepers=double(dem.visible&dem.mask); %visible & glaciated dem points 
 keepers=filter2(ones(11)/(11^2),keepers); %throw away points close to the edge of visibility 

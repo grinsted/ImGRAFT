@@ -339,7 +339,7 @@ classdef camera
             end
             
             [mbest,RSS]=LMFnlsq(misfit,mbest); %WORKS SUPER FAST
-            %an anlternative is using fminunc followed by patternsearch
+            
             
             Nuv=size(uv,1);
             rmse=sqrt(RSS/Nuv);

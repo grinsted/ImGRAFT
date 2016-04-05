@@ -261,6 +261,7 @@ for ii=1:Np
     BB=resizefun(mean(BB,3),R.SuperSample);
     
     [C,uu,vv]=matchfun(AA,BB);
+    %TODO: allow for using max(C.*prior(uu,vv))
     [Cmax,mix]=max(C(:));
     [mix(1),mix(2)]=ind2sub(size(C),mix);
     
@@ -452,6 +453,7 @@ C=C(c(1)+(-wkeep(1):wkeep(1)),c(2)+(-wkeep(2):wkeep(2)));
 uu=-wkeep(2):wkeep(2);
 vv=-wkeep(1):wkeep(1);
 
+% TODO : implement function MTM http://www.faculty.idc.ac.il/toky/Publications/Conference/MTM_ICCV2011.pdf
 
 function lsum=localsum(A,sz)
 %Fast local sum of A. Local being within the a footprint of size sz

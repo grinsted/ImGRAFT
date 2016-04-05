@@ -311,6 +311,7 @@ if license('test','map_toolbox')
     I=geotiffinfo(fname);
 else
     I=imfinfo(fname);
+    I.ModelType='ModelTypeGeographic';  %TODO: fix
 %     %TODO: generate home-made refmatrix(?)....
 %     if isfield(tags, 'ModelTransformationTag') && numel(tags.ModelTransformationTag) >= 8
 %         geoimread does not work for rotated systems
