@@ -111,7 +111,7 @@ end
 R.Initialdu=round(R.Initialdu);
 R.Initialdv=round(R.Initialdv);
 
-if any(R.TemplateWidth>=R.SearchWidth)||any(R.TemplateHeight>=R.SearchHeight)
+if any(R.TemplateWidth(:)>=R.SearchWidth(:))||any(R.TemplateHeight(:)>=R.SearchHeight(:))
     error('imgraft:inputerror','Search window size must be greater than template size.')
 end
 

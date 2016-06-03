@@ -6,7 +6,6 @@ function h=showimg(x,y,A)
 %
 % Aslak Grinsted 2016
 
-
 if ~isa(A,'uint8')
     A=A-min(A(:));
     A=uint8(A*255.49./max(A(:)));
