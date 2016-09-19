@@ -20,7 +20,10 @@ function [du, dv, peakCorr, meanAbsCorr,pu,pv]=templatematch(A,B,varargin)
 %    ShowProgress: Boolean or cell-array of strings.
 %                  true (default) is used for a text progress bar.
 %                  A cell of strings is used to name the A & B images in a progress figure.
-%    Method: 'NCC'(default), 'NORMXCORR2' or 'PC' (normalized cross correlation or phase correlation)
+%    Method: 'NCC' (Default: Normalized Cross Correlation)
+%            'CCF' (Cross correlation function)
+%            'OC' (Orientation Correlation)
+%            'PC' (experimental - phase correlation)
 %
 %  * The template/search height is assumed to be the same as corresponding
 %  widths if not explicitly specified. 
@@ -76,6 +79,7 @@ p.addParameter('Initialdv',0,@isnumeric);
 p.addParameter('ShowProgress',true); 
 p.addParameter('Method','NCC',@ischar);
 p.addParameter('SuperSample',1);
+p.addParameter('Prior',@(pu,pv,dx,dy)1); %TODO --- 
 
 p.parse(varargin{:});
 R=p.Results;
@@ -143,6 +147,13 @@ switch upper(R.Method)
         if ~isfloat(A),A=im2float(A); end
         if ~isfloat(B),B=im2float(B); end
         matchfun=@myNCC;
+    case {'OC'}
+        if ~isfloat(A),A=im2float(A); end
+        if ~isfloat(B),B=im2float(B); end
+        gf=[1 0 -1]; %gf=[1 0;0 -1]; gf=[1 -1]; 
+        ofilter=@(A)exp(1i*atan2(imfilter(A,gf,'replicate'),imfilter(A,rot90(gf),'replicate')));
+        A=ofilter(A);B=ofilter(B);
+        matchfun=@CCF;
     case {'CCF'}
         if ~isfloat(A),A=im2float(A); end
         if ~isfloat(B),B=im2float(B); end
@@ -152,6 +163,7 @@ switch upper(R.Method)
     otherwise
         error('imgraft:inputerror','unknown Method: %s',R.Method)
 end
+
 
 if ~isreal(B)
     B=conj(B); %TODO: if you pass it orientation angles. 
@@ -173,9 +185,13 @@ end
 
 %INITIALIZE PROGRESS FIGURE....
 if ~isempty(R.ShowProgress)
+    
     if islogical(R.ShowProgress)
         progressmsg='';
     else
+        if (~isreal(A))||(~isreal(B))
+            error('imgraft:inputerror','Progress figure is not compatible with complex input images / orientation correlation.')
+        end
         fh=figure;
         set(fh,'name','Templatematch progress','NumberTitle','off','renderer','opengl')
         hax=axes('pos',[0 0.01 0.5 0.95]);
@@ -256,9 +272,10 @@ for ii=1:Np
     end
     
     
-    
-    AA=resizefun(mean(AA,3),R.SuperSample); %TODO: improve edge effects of super sampling. (need 2 extra pixels for cubic) 
-    BB=resizefun(mean(BB,3),R.SuperSample);
+    if R.SuperSample~=1
+        AA=resizefun(AA,R.SuperSample); %TODO: improve edge effects of super sampling. (need 2 extra pixels for cubic) 
+        BB=resizefun(BB,R.SuperSample);
+    end
     
     [C,uu,vv]=matchfun(AA,BB);
     %TODO: allow for using max(C.*prior(uu,vv))
