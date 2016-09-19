@@ -27,6 +27,10 @@ y=extrappad(y);
 
 
 h=surface(x,y,zeros(size(x)),c,'EdgeColor','none','FaceColor','texturemap');
+if nargin<4;
+    alpha=.5;
+end
+alpha=alpha.*(~isnan(c));
 if any(alpha(:)<1)
     set(h,'FaceAlpha',  'texturemap', 'AlphaDataMapping', 'none', 'AlphaData',alpha);
 end
