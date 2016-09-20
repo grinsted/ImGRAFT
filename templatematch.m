@@ -93,7 +93,8 @@ if isempty(R.SearchWidth), R.SearchWidth = R.TemplateWidth+60; end;
 if isempty(R.SearchHeight), R.SearchHeight = R.SearchWidth; end;
 
 if isempty(R.pu)
-    dpu=max(R.TemplateWidth(1)/2,size(A,2)/100); %dont auto generate excessive number of points (idea from: Chad Greene)
+    dpu=max(R.TemplateWidth(1)/2,size(A,2)/100); 
+    %dont auto generate excessive number of points (idea from: Chad Greene)
     dpv=max(R.TemplateHeight(1)/2,size(A,1)/100); 
     R.pu=R.SearchWidth(1)/2 : dpu : size(A,2)-R.SearchWidth(1)/2;
     R.pv=R.SearchHeight(1)/2: dpv : size(A,1)-R.SearchHeight(1)/2;
@@ -153,6 +154,7 @@ switch upper(R.Method)
         gf=[1 0 -1]; %gf=[1 0;0 -1]; gf=[1 -1]; 
         ofilter=@(A)exp(1i*atan2(imfilter(A,gf,'replicate'),imfilter(A,rot90(gf),'replicate')));
         A=ofilter(A);B=ofilter(B);
+        %TODO: should this be done? A(isnan(A))=0;B(isnan(B))=0;
         matchfun=@CCF;
     case {'CCF'}
         if ~isfloat(A),A=im2float(A); end
@@ -240,6 +242,12 @@ else
     end
 end
 
+if size(A,3)+size(B,3)>1, 
+    A=mean(A,3);
+    B=mean(B,3);
+    %TODO:add warning
+end
+    
 for ii=1:Np
     %select current point:
     p=[pu(ii) pv(ii)];
@@ -478,12 +486,12 @@ function lsum=localsum(A,sz)
 % A = cumsum(A(:,1+sz(2):end-1)-A(:,1:end-sz(2)-1),1);
 % lsum= A(1+sz(1):end-1,:)-A(1:end-sz(1)-1,:);
 zp=zeros(size(A,1),sz(2)); %thanks to Matthew for spotting padarray dependency. opportunity to optimize further.
-A = cumsum([zp,A,zp],2);
+A = cumsum([zp,A,zp],2); 
 zp=zeros(sz(1),size(A,2));
 A=[zp;A;zp];
 A = cumsum(A(:,1+sz(2):end-1)-A(:,1:end-sz(2)-1),1);
 lsum= A(1+sz(1):end-1,:)-A(1:end-sz(1)-1,:);
-
+ 
 
 function A=im2float(A)
 %im2double etc only available in image processing toolbox. this is a workaround.
