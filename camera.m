@@ -204,7 +204,11 @@ classdef camera
             %        pixel coordinates in uv.
             %
             %
-            
+            nanix=any(isnan(uv),2);
+            anynans=any(nanix);
+            if anynans
+                uv(nanix,:)=[];
+            end
             if nargin==2
                 
                 %first an exact calculation based on non-distorted model...
@@ -249,6 +253,11 @@ classdef camera
                     end
                     xy0=[Xscat(uv(:,1),uv(:,2)) Yscat(uv(:,1),uv(:,2)) Zscat(uv(:,1),uv(:,2))];
                     xyz=xy0;
+
+                    if anynans
+                        xyz(find(~nanix),:)=xyz; %find necessary because it ensures that xyz can grow.
+                        xyz(find(nanix),:)=nan;
+                    end
                     return
                 end
                 
@@ -279,6 +288,10 @@ classdef camera
                     end
                 end
                 
+            end
+            if anynans                
+                xyz(find(~nanix),:)=xyz; %find necessary because it ensures that xyz can grow.
+                xyz(find(nanix),:)=nan;
             end
         end
         
