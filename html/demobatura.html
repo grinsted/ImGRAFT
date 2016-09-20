@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Batura Glacier, Karakoram</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-01-12"><meta name="DC.source" content="demobatura.m"><style type="text/css">
+      --><title>Batura Glacier, Karakoram</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-09-20"><meta name="DC.source" content="demobatura.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -75,6 +75,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 [A,x,y,Ia]=geoimread(fullfile(datafolder,<span class="string">'batura_2001.tif'</span>));
 [B,xb,yb,Ib]=geoimread(fullfile(datafolder,<span class="string">'batura_2002.tif'</span>));
 deltax=x(2)-x(1);<span class="comment">%m/pixel</span>
+deltay=y(2)-y(1);<span class="comment">%m/pixel</span>
 
 
 <span class="comment">%make regular grid of points to track:</span>
@@ -91,7 +92,7 @@ roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;<span class="keyword
 mask=inpolygon(pu,pv,roi(:,1),roi(:,2));
 pu(~mask)=nan; <span class="comment">%inserting nans at some locations will tell template match to skip these locations</span>
 
-[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,<span class="string">'showprogress'</span>,{<span class="string">'2001'</span> <span class="string">'2002'</span>});
+[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,<span class="string">'showprogress'</span>,true,<span class="string">'method'</span>,<span class="string">'oc'</span>);
 close <span class="string">all</span>
 
 <span class="comment">%visualize the results</span>
@@ -102,13 +103,13 @@ showimg(x,y,A)
 hold <span class="string">on</span>
 signal2noise=C./Cnoise;
 keep=(signal2noise&gt;2)&amp;(C&gt;.6);
-V=(du+dv*1i)*deltax; <span class="comment">%m/yr</span>
+V=(du*deltax)+(dv*1i)*deltay; <span class="comment">%m/yr</span>
 Vn=abs(V);
 alphawarp(px,py,Vn,.2+keep*.5)
 quiver(px(keep),py(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,<span class="string">'k'</span>) <span class="comment">%arrows show direction.</span>
 caxis([0 200])
 colorbar(<span class="string">'southoutside'</span>);
-</pre><img vspace="5" hspace="5" src="demobatura_01.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="demobatura_01.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Batura Glacier, Karakoram
 %
@@ -129,6 +130,7 @@ datafolder=downloadDemoData('cias');
 [A,x,y,Ia]=geoimread(fullfile(datafolder,'batura_2001.tif')); 
 [B,xb,yb,Ib]=geoimread(fullfile(datafolder,'batura_2002.tif')); 
 deltax=x(2)-x(1);%m/pixel
+deltay=y(2)-y(1);%m/pixel
 
 
 %make regular grid of points to track:
@@ -145,7 +147,7 @@ roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;...
 mask=inpolygon(pu,pv,roi(:,1),roi(:,2));
 pu(~mask)=nan; %inserting nans at some locations will tell template match to skip these locations
 
-[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,'showprogress',{'2001' '2002'});
+[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,'showprogress',true,'method','oc');
 close all
 
 %visualize the results
@@ -156,7 +158,7 @@ showimg(x,y,A)
 hold on
 signal2noise=C./Cnoise;
 keep=(signal2noise>2)&(C>.6);
-V=(du+dv*1i)*deltax; %m/yr
+V=(du*deltax)+(dv*1i)*deltay; %m/yr
 Vn=abs(V);
 alphawarp(px,py,Vn,.2+keep*.5)
 quiver(px(keep),py(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,'k') %arrows show direction. 

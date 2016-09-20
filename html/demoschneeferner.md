@@ -59,7 +59,7 @@ clabel(c,h)
 
 %Show GCPs and reprojected GCPs
 uvGCP=camA.project(gcpA(:,1:3));
-h=plot(uvGCP(:,1),uvGCP(:,2),'ro',gcpA(:,4),gcpA(:,5),'m*','markerfacecolor','w')
+h=plot(uvGCP(:,1),uvGCP(:,2),'ro',gcpA(:,4),gcpA(:,5),'m*','markerfacecolor','w');
 legend(h([2 1]),'UV of GCP','projection of GCPs','location','northeast')
 title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 ```
@@ -68,11 +68,6 @@ title(sprintf('Projection of ground control points. RMSE=%.1fpx',rmse))
 Warning: Columns of data containing NaN values have been ignored during
 interpolation. 
 reprojectionerror=1.6px  AIC:  16
-h = 
-  2x1 Line array:
-
-  Line
-  Line
 
 ```
     

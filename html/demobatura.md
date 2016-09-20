@@ -17,6 +17,7 @@ datafolder=downloadDemoData('cias');
 [A,x,y,Ia]=geoimread(fullfile(datafolder,'batura_2001.tif'));
 [B,xb,yb,Ib]=geoimread(fullfile(datafolder,'batura_2002.tif'));
 deltax=x(2)-x(1);%m/pixel
+deltay=y(2)-y(1);%m/pixel
 
 
 %make regular grid of points to track:
@@ -33,7 +34,7 @@ roi=[387 452;831 543;1126 899;1343 1006;1657 1022;2188 1330;...
 mask=inpolygon(pu,pv,roi(:,1),roi(:,2));
 pu(~mask)=nan; %inserting nans at some locations will tell template match to skip these locations
 
-[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,'showprogress',{'2001' '2002'});
+[du,dv,C,Cnoise,pu,pv]=templatematch(A,B,pu,pv,'showprogress',true,'method','oc');
 close all
 
 %visualize the results
@@ -44,7 +45,7 @@ showimg(x,y,A)
 hold on
 signal2noise=C./Cnoise;
 keep=(signal2noise>2)&(C>.6);
-V=(du+dv*1i)*deltax; %m/yr
+V=(du*deltax)+(dv*1i)*deltay; %m/yr
 Vn=abs(V);
 alphawarp(px,py,Vn,.2+keep*.5)
 quiver(px(keep),py(keep),real(V(keep))./Vn(keep),imag(V(keep))./Vn(keep),0.2,'k') %arrows show direction.

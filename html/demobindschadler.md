@@ -37,7 +37,7 @@ colorbar('eastoutside');
 ```
 
 ```
-Elapsed time is 1.594086 seconds.
+Elapsed time is 1.346849 seconds.
 
 ```
     
