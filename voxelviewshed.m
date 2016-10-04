@@ -61,15 +61,15 @@ dx=abs(X(2,2)-X(1,1));
 dy=abs(Y(2,2)-Y(1,1));
 
 sz=size(Z);
-X=(X(:)-camxyz(1))/dx;
-Y=(Y(:)-camxyz(2))/dy;
+X=X(:)-camxyz(1);
+Y=Y(:)-camxyz(2);
 Z=Z(:)-camxyz(3);
 
 d=sqrt(X.^2+Y.^2+Z.^2); 
 x=(atan2(Y,X)+pi)/(pi*2);
 y=Z./d;
 
-[~,ix]=sortrows([round(sqrt(X.^2+Y.^2)) x]); %round
+[~,ix]=sortrows([round(sqrt((X/dx).^2+(Y/dy).^2)) x]); %round
 
 loopix=find(diff(x(ix))<0);
 vis=true(size(X,1),1);
