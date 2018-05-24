@@ -96,8 +96,8 @@ if isempty(R.pu)
     dpu=max(R.TemplateWidth(1)/2,size(A,2)/100); 
     %dont auto generate excessive number of points (idea from: Chad Greene)
     dpv=max(R.TemplateHeight(1)/2,size(A,1)/100); 
-    R.pu=R.SearchWidth(1)/2 : dpu : size(A,2)-R.SearchWidth(1)/2;
-    R.pv=R.SearchHeight(1)/2: dpv : size(A,1)-R.SearchHeight(1)/2;
+    R.pu=R.TemplateWidth(1)/2 : dpu : size(A,2)-R.TemplateWidth(1)/2;
+    R.pv=R.TemplateHeight(1)/2: dpv : size(A,1)-R.TemplateHeight(1)/2;
     [R.pu,R.pv]=meshgrid(R.pu,R.pv);
 end
 
@@ -273,7 +273,13 @@ for ii=1:Np
     
     try
         BB=B( Bcenter(2)+(-SearchHeight/2:SearchHeight/2)  ,Bcenter(1)+(-SearchWidth/2:SearchWidth/2),:);
+        if any(any(isnan(BB([1 end],[1 end]))))
+            continue
+        end
         AA=A( Acenter(2)+(-TemplateHeight/2:TemplateHeight/2),Acenter(1)+(-TemplateWidth/2:TemplateWidth/2),:);
+        if any(any(isnan(AA([1 end],[1 end]))))
+            continue
+        end
     catch
         %out of bounds... continue (and thus return a nan for that point)
         continue
@@ -284,6 +290,8 @@ for ii=1:Np
         AA=resizefun(AA,R.SuperSample); %TODO: improve edge effects of super sampling. (need 2 extra pixels for cubic) 
         BB=resizefun(BB,R.SuperSample);
     end
+
+
     
     [C,uu,vv]=matchfun(AA,BB);
     %TODO: allow for using max(C.*prior(uu,vv))
@@ -453,7 +461,6 @@ C=C(c(1)+(-wkeep(1):wkeep(1)),c(2)+(-wkeep(2):wkeep(2)));
 uu=-wkeep(2):wkeep(2);
 vv=-wkeep(1):wkeep(1);
 
-
 function [C,uu,vv]=CCF(T,B)
 %
 % Cross-correlation F - Requires single/double input.
@@ -461,16 +468,9 @@ function [C,uu,vv]=CCF(T,B)
 %
 sT=size(T); sB=size(B);
 sz=sB+sT-1;
-%meanT=sum(T(:))/numel(T);
-%sigmaT=sqrt(sum((T(:)-meanT).^2));
-%if sigmaT~=0
-    fT=fft2(rot90(T,2),sz(1),sz(2));
-    fB=fft2(B,sz(1),sz(2));
-    C=real(ifft2(fB.*fT));
-    %C(abs(C)>1.1)=0; %this can happen if sigmaB almost 0, but we still allow C<1.1 to accomodate potential rounding issue for perfect correlation.
-%else
-%    C=zeros(sz);
-%end
+fT=fft2(rot90(T,2),sz(1),sz(2));
+fB=fft2(B,sz(1),sz(2));
+C=real(ifft2(fB.*fT));
 %crop to central part not affected by edges.
 wkeep=(sB-sT)/2;
 c=(sz+1)/2;
