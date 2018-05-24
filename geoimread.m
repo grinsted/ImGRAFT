@@ -207,14 +207,14 @@ cols=find((x>=xlim(1))&(x<=xlim(2)));
 
 
 %% Display messages if region of interest is partly or wholly outside the image region:
-
-if xlim(1)<min(x)||xlim(2)>max(x)
-    disp('geoimread limits extend beyond the available image output in the x direction.')
-end
-
-if ylim(1)<min(y)||ylim(2)>max(y)
-    disp('geoimread limits extend beyond the available image output in the y direction.')
-end
+% 
+% if xlim(1)<min(x)||xlim(2)>max(x)
+%     warning('geoimread limits extend beyond the available image output in the x direction.')
+% end
+% 
+% if ylim(1)<min(y)||ylim(2)>max(y)
+%     warning('geoimread limits extend beyond the available image output in the y direction.')
+% end
 
 if isempty(rows)||isempty(cols)
     error('No image coordinates can be found inside the specified limits.')
