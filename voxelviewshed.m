@@ -43,9 +43,11 @@ function vis=voxelviewshed(X,Y,Z,camxyz)
 
 if nargin==0 %run an example if no input arguments.
     warning('no input arguments. Will use test dataset.... ')
-    [X,Y]=meshgrid(-299:300);
+    N=300;
+    [X,Y]=meshgrid(-N:N);
     Z=abs(ifft2(ifftshift((hypot(Y,X)+1e-5).^(-2.1).*exp(rand(size(X))*2i*pi)))); %example terrain inspired by rafael.pinto
-    Z=(Z-Z(300,300))/std(Z(:)); camxyz=[0.002,0.002,0.5];
+    Z=(Z-Z(N,N))/std(Z(:)); 
+    camxyz=[0.002,0.002,0.5];
     vis=voxelviewshed(X,Y,Z,camxyz);
     clf;
     surf(X,Y,Z,Z.*vis-~vis*2,'EdgeColor','none','FaceColor','interp');
@@ -61,29 +63,40 @@ dx=abs(X(2,2)-X(1,1));
 dy=abs(Y(2,2)-Y(1,1));
 
 sz=size(Z);
-X=X(:)-camxyz(1);
-Y=Y(:)-camxyz(2);
-Z=Z(:)-camxyz(3);
+X=X-camxyz(1);
+Y=Y-camxyz(2);
+Z=Z-camxyz(3);
 
 d=sqrt(X.^2+Y.^2+Z.^2); 
 x=(atan2(Y,X)+pi)/(pi*2);
-y=Z./d;
+Z=Z./d; %reuse Z for visual height to minimize mem-usage.
 
-[~,ix]=sortrows([round(sqrt((X/dx).^2+(Y/dy).^2)) x]); %round
+
+voxx=sortrows([x(:,1); x(end,2:end-1)'; x(:,end); x(1,2:end-1)']);
+
+x=x(:);
+Z=Z(:);
+
+% use this instead?
+
+%slow sorting for huge....
+d=sqrt((X/dx).^2+(Y/dy).^2); %%reuse d for horiz dist to minimize mem-usage
+[~,ix]=sortrows([ceil(d(:)) x]); %round/ceil?
+
 
 loopix=find(diff(x(ix))<0);
-vis=true(size(X,1),1);
+vis=true(size(x,1),1);
 
-maxd=max(d);%TODO: optimize
-N=ceil(2*pi/(dx/maxd)); %number of points in voxel horizon
-
-voxx=(0:N)'/N;
+% maxd=max(d);%TODO: optimize
+% % %N=ceil(2*pi/(dx/maxd)); %number of points in voxel horizon
+% N=ceil(8*maxd/sqrt(2));
+% voxx=(0:N)'/N;
 voxy=zeros(size(voxx))-inf;
 
 for k=1:length(loopix)-1
     lp=ix(loopix(k)+1:loopix(k+1));
     lp=lp([end 1:end 1]);
-    yy=y(lp);  xx=x(lp);
+    yy=Z(lp);  xx=x(lp);
     xx(1)=xx(1)-1;xx(end)=xx(end)+1;
     vis(lp(2:end-1))=interp1q(voxx,voxy,xx(2:end-1))<yy(2:end-1);
     voxy=max(voxy,interp1q(xx,yy,voxx));
