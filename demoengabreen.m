@@ -129,7 +129,7 @@ ZA = interp2(dem.X,dem.Y,dem.filled,XA,YA);
 %Insert nans where we do not want to track:
 keepers = double(dem.visible&dem.mask); %visible & glaciated dem points 
 keepers = filter2(ones(11)/(11^2),keepers); %throw away points close to the edge of visibility 
-keepers = interp2(dem.X,dem.Y,keepers,X(:),Y(:))>.99; %which candidate points fullfill the criteria.
+keepers = interp2(dem.X,dem.Y,keepers,XA(:),YA(:))>.99; %which candidate points fullfill the criteria.
 uvA(~(keepers&inframe)) = nan;
 
 %% Track points between images.
