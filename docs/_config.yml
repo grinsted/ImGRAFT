@@ -2,7 +2,7 @@
 title: imgraft
 email: ag+imgraft@glaciology.net
 description: An image georectification and feature tracking toolbox for MATLAB
-baseurl: /ImGRAFT
+baseurl: /imgraft
 url: http://grinsted.github.io
 twitter_username: agrinsted
 github_username: grinsted
