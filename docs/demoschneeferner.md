@@ -3,9 +3,9 @@
 Schneefernerkopf example using data from PRACTISE
 ==========================================================
 
-The PRACTISE (Photo Rectification And ClassificaTIon SoftwarE) open source package has an example data set  from Schneefernerkopf, southern Germany (supplementary data to Härer et al. 2013) . Here, we show how you can use the ImGRAFT camera model on this data set. The example data set is also attached below.
+The PRACTISE (Photo Rectification And ClassificaTIon SoftwarE) open source package has an example data set  from Schneefernerkopf, southern Germany (supplementary data to HÃ¶rer et al. 2013) . Here, we show how you can use the ImGRAFT camera model on this data set. The example data set is also attached below.
 
-Härer, S., Bernhardt, M., Corripio, J. G., & Schulz, K. (2013). PRACTISE–Photo Rectification And ClassificaTIon SoftwarE (V. 1.0). Geoscientific Model Development
+HÃ¶rer, S., Bernhardt, M., Corripio, J. G., & Schulz, K. (2013). PRACTISE Photo Rectification And ClassificaTIon SoftwarE (V. 1.0). Geoscientific Model Development
 
 Note this example needs the matlab mapping toolbox for loading the DEM.
 

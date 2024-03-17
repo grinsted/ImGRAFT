@@ -3,7 +3,7 @@
 Batura Glacier, Karakoram
 ==========================================================
 
-CIAS is another free feature tracking software. This is a GUI written in IDL by K‰‰b & Vollmer. Here we use ImGRAFT to track one of the CIAS example data sets using orthorectified Landsat 7 images from Batura. Here's how you might track it in ImGRAFT.
+CIAS is another free feature tracking software. This is a GUI written in IDL by K√§√§b & Vollmer. Here we use ImGRAFT to track one of the CIAS example data sets using orthorectified Landsat 7 images from Batura. Here's how you might track it in ImGRAFT.
 
 Note: this example needs the mapping toolbox in order to read the geo-tiffs.
 

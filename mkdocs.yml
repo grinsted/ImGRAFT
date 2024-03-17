@@ -1,0 +1,10 @@
+site_name: ImGRAFT documentation
+site_description: An image georectification and feature tracking toolbox for MATLAB
+nav:
+  - Frontpage: index.md
+  - Install: installation.md
+  - Functions: functions.md
+  - Demos: demos.md
+  - FAQ: faq.md
+
+theme: readthedocs
