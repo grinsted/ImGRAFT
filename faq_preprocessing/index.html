@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Functions - ImGRAFT documentation</title>
+    <title>Faq preprocessing - ImGRAFT documentation</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Functions";
-        var mkdocs_page_input_path = "functions.md";
+        var mkdocs_page_name = "Faq preprocessing";
+        var mkdocs_page_input_path = "faq_preprocessing.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -47,16 +47,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../installation/">Install</a>
                 </li>
               </ul>
-              <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="./">Functions</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#templatematch">templatematch</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#cameram">camera.m</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#voxelviewshedm">voxelviewshed.m</a>
-    </li>
-    </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../functions/">Functions</a>
                 </li>
               </ul>
               <ul>
@@ -81,7 +73,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Functions</li>
+      <li class="breadcrumb-item active">Faq preprocessing</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -90,20 +82,38 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="key-functions-and-classes-in-the-package">Key Functions and classes in the package</h1>
-<h2 id="templatematch"><a href="../templatematch/">templatematch</a></h2>
-<p>... is the function which tracks the displacement between two images.  </p>
-<h2 id="cameram"><a href="../camera/">camera.m</a></h2>
-<p>... is a class which can be used to project between pixel and world coordinates.</p>
-<h2 id="voxelviewshedm"><a href="../voxelviewshed/">voxelviewshed.m</a></h2>
-<p>... is a fast function for calculating the viewshed of a dem from a given viewpoint.</p>
+                <h2 id="preprocessing-images-for-feature-tracking">Preprocessing images for feature tracking</h2>
+<p>In some cases you may improve the feature tracking by pre-processing the images. The aim of the preprocessing may be to reduce effects from different lighting conditions, remove noise, or reduce the weight of outliers. Here are a set of proposed pre-processing steps that may improve your results. </p>
+<p>Many of the filters below are written using matlabs @-syntax for anonymous functions. You would apply the filters like this:</p>
+<pre><code class="language-matlab">A=im2single(imread('test.tif'));
+hpass=@(A,sigma)A-imfilter(A,fspecial('gaussian',sigma*3,sigma)); %define a filter function
+A=hpass(A,3); %apply the filter
+imagesc(A)
+</code></pre>
+<h2 id="high-pass-filtering">High-pass filtering</h2>
+<p>Feature tracking using NCC will attempt to align bright and dark regions of the image. These may correspond to illuminated vs shadow regions of the ice and thus depend strongly on the direction of the illumination. For that reason you may want to apply a high pass filter to focus on finer details than large patches of bright and dark. This can be written in matlab like this:</p>
+<pre><code class="language-matlab">hpass=@(A,sigma)A-imfilter(A,fspecial('gaussian',sigma*3,sigma))
+</code></pre>
+<h2 id="local-histogram-equalization">Local histogram equalization</h2>
+<p>Histogram equalization will bring in outliers so that they are not allowed to dominate the output.</p>
+<pre><code class="language-matlab">histequalfilt=@(A,tilesize)adapthisteq(A,'NumTiles',ceil(size(A)./tilesize));
+</code></pre>
+<p>See help on adapthisteq from the image processing toolbox. </p>
+<h2 id="noise-reduction">Noise reduction</h2>
+<p>See e.g. the wiener2 function in the image processing toolbox. </p>
+<p>Combination of filters
+You can combine multiple filters.  E.g.</p>
+<pre><code class="language-matlab">myfilter=@(A)histequalfilt(hpass(A,3),50);
+</code></pre>
+<h2 id="structure-texture-separation">Structure texture separation</h2>
+<p>Structure texture separation separates the image into a structure component which can be thought of as the background color, and a residual called the texture. In this respect the structure component is similar to a low-pass filtered image except that structure-texture methods allow for sharp transitions between regions of different brightness. 
+I have not tried structure-texture separation techniques yet but have read papers that indicate that this may be a very fruitful venue for tracking between scenes where the sun position has changed.  It could help suppress the sharp brightness change at the edge of a shadow from a mountain. </p>
+<p>I recommend this matlab package: http://www.cse.cuhk.edu.hk/leojia/projects/texturesep/index.html</p>
+<h2 id="gradient-orientation-transformation">Gradient orientation transformation</h2>
+<p>See also Orientation correlation -- This is now a built-in method of templatematch.</p>
               
             </div>
           </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../installation/" class="btn btn-neutral float-left" title="Install"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../demos/" class="btn btn-neutral float-right" title="Demos">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
 
   <hr/>
 
@@ -125,10 +135,6 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../installation/" style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../demos/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
