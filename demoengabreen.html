@@ -1,0 +1,460 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>demoengabreen</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-09-20"><meta name="DC.source" content="demoengabreen.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Feature tracking example</a></li><li><a href="#2">Setup file locations and load images &amp; data</a></li><li><a href="#3">Determine camera parameters for image A</a></li><li><a href="#4">Determine view direction of camera B.</a></li><li><a href="#5">Generate a set of points to be tracked between images</a></li><li><a href="#6">Track points between images.</a></li><li><a href="#7">Georeference tracked points</a></li><li><a href="#8">Project velocity onto downhill slope direction</a></li></ul></div><h2>Feature tracking example<a name="1"></a></h2><p>This is a complete example of feature tracking on Engabreen.</p><div><ol><li>Load images &amp; data</li><li>Use GCPs to determine camera view direction and lens distortion   parameters of image</li><li>track stable rock features to determine camera shake and infer view direction   of image B</li><li>Pre-process DEM by filling crevasses.</li><li>Track ice motion between images</li><li>Georeference tracked points and calculate real world velocities.</li></ol></div><pre class="codeinput">close <span class="string">all</span>
+</pre><h2>Setup file locations and load images &amp; data<a name="2"></a></h2><pre class="codeinput">idA = 8902; idB = 8937; <span class="comment">% image ids (/file numbers)</span>
+
+datafolder = <span class="string">'demos'</span>;
+fA = fullfile(datafolder,sprintf(<span class="string">'IMG_%4.0f.jpg'</span>,idA));
+fB = fullfile(datafolder,sprintf(<span class="string">'IMG_%4.0f.jpg'</span>,idB));
+
+<span class="comment">%load images:</span>
+A = imread(fA);
+B = imread(fB);
+
+metaA = imfinfo(fA);tA = datenum(metaA.DateTime,<span class="string">'yyyy:mm:dd HH:MM:SS'</span>);
+metaB = imfinfo(fB);tB = datenum(metaB.DateTime,<span class="string">'yyyy:mm:dd HH:MM:SS'</span>);
+
+dem = load(fullfile(datafolder,<span class="string">'dem'</span>)); <span class="comment">%load DEM</span>
+gcpA = load(fullfile(datafolder,<span class="string">'gcp8902.txt'</span>));<span class="comment">%load ground control points for image A</span>
+</pre><h2>Determine camera parameters for image A<a name="3"></a></h2><div><ol><li>Initial crude guess at camera parameters</li><li>Use GCPs to optimize camera parameters</li></ol></div><pre class="codeinput"><span class="comment">%calculate focal length in pixel units:</span>
+FocalLength = 30; <span class="comment">%mm (can also be found here: metaA.DigitalCamera.FocalLength)</span>
+SensorSize = [22.0 14.7]; <span class="comment">%mm: http://www.cnet.com/products/canon-eos-rebel-t3/specs/</span>
+imgsz = size(A);
+f = imgsz([2 1]).*(FocalLength./SensorSize);
+
+<span class="comment">%known camera location:</span>
+cameralocation = [446722.0 7396671.0 770.0];
+
+<span class="comment">%crude estimate of look direction.</span>
+camA = camera(cameralocation,size(A),[200 0 0]*pi/180,f); <span class="comment">%loooking west</span>
+
+<span class="comment">%Use GCPs to optimize the following camera parameters:</span>
+<span class="comment">%view dir, focal lengths, and a simple radial distortion model</span>
+[camA,rmse,aic] = camA.optimizecam(gcpA(:,1:3),gcpA(:,4:5),<span class="string">'00000111110010000000'</span>);
+fprintf(<span class="string">'reprojectionerror = %3.1fpx  AIC:%4.0f\n'</span>,rmse,aic)
+
+<span class="comment">%Visually compare the projection of the GCPs with the pixel coords:</span>
+figure
+axes(<span class="string">'position'</span>,[0 .1 1 .8]); hold <span class="string">on</span>
+image(A)
+axis <span class="string">equal</span> <span class="string">off</span> <span class="string">ij</span> <span class="string">tight</span>
+hold <span class="string">on</span>
+uv = camA.project(gcpA(:,1:3));
+h = plot(gcpA(:,4),gcpA(:,5),<span class="string">'+'</span>,uv(:,1),uv(:,2),<span class="string">'rx'</span>);
+legend(h,<span class="string">'UV of GCP'</span>,<span class="string">'projection of GCPs'</span>,<span class="string">'location'</span>,<span class="string">'southoutside'</span>)
+title(sprintf(<span class="string">'Projection of ground control points. RMSE = %.1fpx'</span>,rmse))
+</pre><pre class="codeoutput">reprojectionerror = 5.1px  AIC: 155
+</pre><img vspace="5" hspace="5" src="demoengabreen_01.png" alt=""> <h2>Determine view direction of camera B.<a name="4"></a></h2><div><ol><li>find movement of rock features between images A and B</li><li>determine camera B by pertubing viewdir of camera A.</li></ol></div><pre class="codeinput"><span class="comment">% First get an approximate estimate of the image shift using a single large</span>
+<span class="comment">% template</span>
+[duoffset,dvoffset] = templatematch(A,B,3000,995,<span class="string">'templatewidth'</span>,261,<span class="string">'searchwidth'</span>,400,<span class="string">'supersample'</span>,0.5,<span class="string">'showprogress'</span>,false)
+
+<span class="comment">% Get a whole bunch of image shift estimates using a grid of probe points.</span>
+<span class="comment">% Having multiple shift estimates will allow us to determine camera</span>
+<span class="comment">% rotation.</span>
+[pu,pv] = meshgrid(200:700:4000,100:400:1000);
+pu = pu(:); pv = pv(:)+pu/10;
+
+[du,dv,C] = templatematch(A,B,pu,pv,<span class="string">'templatewidth'</span>,61,<span class="string">'searchwidth'</span>,81,<span class="string">'supersample'</span>,3,<span class="string">'initialdu'</span>,duoffset,<span class="string">'initialdv'</span>,dvoffset);
+
+
+<span class="comment">% Determine camera rotation between A and B from the set of image</span>
+<span class="comment">% shifts.</span>
+
+<span class="comment">% find 3d coords consistent with the 2d pixel coords in points.</span>
+xyz = camA.invproject([pu pv]);
+<span class="comment">% the projection of xyz has to match the shifted coords in points+dxy:</span>
+
+[camB,rmse] = camA.optimizecam(xyz,[pu+du pv+dv],<span class="string">'00000111000000000000'</span>); <span class="comment">%optimize 3 view direction angles to determine camera B.</span>
+rmse
+
+<span class="comment">%quantify the shift between A and B in terms of an delta angle.</span>
+DeltaViewDirection = (camB.viewdir-camA.viewdir)*180/pi
+</pre><pre class="codeoutput">duoffset =
+       13.679
+dvoffset =
+       -1.244
+rmse =
+       0.4059
+DeltaViewDirection =
+      0.12633     0.017584     0.015242
+</pre><h2>Generate a set of points to be tracked between images<a name="5"></a></h2><div><ol><li>Generate a regular grid of candidate points in world coordinates.</li><li>Cull the set of candidate points to those that are visible and glaciated</li></ol></div><pre class="codeinput"><span class="comment">% The viewshed is all the points of the dem that are visible from the</span>
+<span class="comment">% camera location. They may not be in the field of view of the lens.</span>
+dem.visible = voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
+
+<span class="comment">%Make a regular 50 m grid of points we would like to track from image A</span>
+[XA,YA] = meshgrid(min(dem.x):50:max(dem.x),min(dem.y):50:max(dem.y));
+ZA = interp2(dem.X,dem.Y,dem.filled,XA,YA);
+
+<span class="comment">%Figure out which pixel coordinates they correspond to:</span>
+[uvA,~,inframe] = camA.project([XA(:) YA(:) ZA(:)]); <span class="comment">%where would the candidate points be in image A</span>
+
+<span class="comment">%Insert nans where we do not want to track:</span>
+keepers = double(dem.visible&amp;dem.mask); <span class="comment">%visible &amp; glaciated dem points</span>
+keepers = filter2(ones(11)/(11^2),keepers); <span class="comment">%throw away points close to the edge of visibility</span>
+keepers = interp2(dem.X,dem.Y,keepers,X(:),Y(:))&gt;.99; <span class="comment">%which candidate points fullfill the criteria.</span>
+uvA(~(keepers&amp;inframe)) = nan;
+</pre><h2>Track points between images.<a name="6"></a></h2><pre class="codeinput"><span class="comment">% calculate where points would be in image B if no ice motion</span>
+<span class="comment">% ( i.e. accounting only for camera shake)</span>
+camshake = camB.project(camA.invproject(uvA))-uvA;
+
+options = [];
+options.pu = uvA(:,1);
+options.pv = uvA(:,2);
+options.method = <span class="string">'OC'</span>;
+options.showprogress = true;
+options.searchwidth = 81;
+options.templatewidth = 21;
+options.supersample = 2; <span class="comment">%supersample the input images for better subpixel estimation</span>
+options.initialdu = camshake(:,1);
+options.initialdv = camshake(:,2);
+
+[du,dv,C,Cnoise] = templatematch(A,B,options);
+
+uvB = uvA+[du dv];
+
+signal2noise = C./Cnoise;
+</pre><h2>Georeference tracked points<a name="7"></a></h2><p>... and calculate velocities</p><pre class="codeinput">xyzA = camA.invproject(uvA,dem.X,dem.Y,dem.filled); <span class="comment">% has to be recalculated because uvA has been rounded.</span>
+xyzB = camB.invproject(uvB,dem.X,dem.Y,dem.filled-dem.mask*22.75*(tB-tA)/365); <span class="comment">% impose a thinning of the DEM of 23m/yr between images.</span>
+V = (xyzB-xyzA)./(tB-tA); <span class="comment">% 3d velocity.</span>
+
+Vx = reshape(V(:,1),size(XA));
+Vy = reshape(V(:,2),size(YA));
+Vz = reshape(V(:,3),size(ZA));
+
+
+figure;
+showimg(dem.x,dem.y,dem.rgb);
+hold <span class="string">on</span>
+Vn = sqrt(sum(V(:,1:2).^2,2));
+keep = signal2noise&gt;2 &amp; C&gt;.7;
+alphawarp(XA,YA,sqrt(Vx.^2+Vy.^2))
+quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,<span class="string">'k'</span>)
+caxis([0 1])
+colormap <span class="string">hot</span>
+hcb = colorbar(<span class="string">'southoutside'</span>);
+plot(camA.xyz(1),camA.xyz(2),<span class="string">'r+'</span>)
+title(<span class="string">'Velocity in metres per day'</span>)
+</pre><img vspace="5" hspace="5" src="demoengabreen_02.png" alt=""> <h2>Project velocity onto downhill slope direction<a name="8"></a></h2><p>---- The largest error in the velocities will along the view direction vector. By projecting to the slope direction we strongly suppress errors arising from this.</p><pre class="codeinput">[gradX,gradY] = gradient(dem.filled,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
+gradN = sqrt(gradX.^2+gradY.^2);
+gradX = -gradX./gradN;gradY = -gradY./gradN;
+gradX = interp2(dem.X,dem.Y,gradX,XA,YA);
+gradY = interp2(dem.X,dem.Y,gradY,XA,YA);
+Vgn = Vx.*gradX+Vy.*gradY;<span class="comment">%Velocity along glacier</span>
+Vacross = Vx.*gradY-Vy.*gradX; <span class="comment">%Velocity across glacier</span>
+
+keep = reshape(keep,size(XA));
+
+<span class="comment">%We do not trust regions with large across glacier flow. We may get large errors where the motion is</span>
+<span class="comment">%in and out of the frame. I.e. in places where the glacier surface is</span>
+<span class="comment">%viewed very obliquely. In those places we do not have a sufficiently good</span>
+<span class="comment">%view to calculate velocities. We apply a filter to remove these.</span>
+keep = keep&amp;(abs(Vgn)&gt;abs(Vacross));
+
+close <span class="string">all</span>
+figure
+showimg(dem.x,dem.y,dem.rgb);
+axis <span class="string">equal</span> <span class="string">xy</span> <span class="string">off</span> <span class="string">tight</span>
+
+hold <span class="string">on</span>
+alphawarp(XA,YA,Vgn,keep*.7)
+quiver(XA(keep),YA(keep),gradX(keep),gradY(keep),.2,<span class="string">'k'</span>)
+
+caxis([0 1])
+colormap <span class="string">hot</span>
+hcb = colorbar(<span class="string">'southoutside'</span>);
+
+plot(camA.xyz(1),camA.xyz(2),<span class="string">'r+'</span>)
+title(<span class="string">'Velocity along slope direction in metres per day'</span>)
+</pre><img vspace="5" hspace="5" src="demoengabreen_03.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Feature tracking example
+%   
+% This is a complete example of feature tracking on Engabreen.
+% 
+% # Load images & data
+% # Use GCPs to determine camera view direction and lens distortion
+%   parameters of image
+% # track stable rock features to determine camera shake and infer view direction
+%   of image B
+% # Pre-process DEM by filling crevasses.
+% # Track ice motion between images
+% # Georeference tracked points and calculate real world velocities.
+%
+%
+
+close all
+
+%% Setup file locations and load images & data
+%
+% 
+
+idA = 8902; idB = 8937; % image ids (/file numbers)
+
+datafolder = 'demos';
+fA = fullfile(datafolder,sprintf('IMG_%4.0f.jpg',idA));
+fB = fullfile(datafolder,sprintf('IMG_%4.0f.jpg',idB));
+
+%load images:
+A = imread(fA);
+B = imread(fB);
+
+metaA = imfinfo(fA);tA = datenum(metaA.DateTime,'yyyy:mm:dd HH:MM:SS');
+metaB = imfinfo(fB);tB = datenum(metaB.DateTime,'yyyy:mm:dd HH:MM:SS');
+
+dem = load(fullfile(datafolder,'dem')); %load DEM
+gcpA = load(fullfile(datafolder,'gcp8902.txt'));%load ground control points for image A
+
+
+%% Determine camera parameters for image A
+%
+% # Initial crude guess at camera parameters
+% # Use GCPs to optimize camera parameters
+% 
+
+%calculate focal length in pixel units:
+FocalLength = 30; %mm (can also be found here: metaA.DigitalCamera.FocalLength)
+SensorSize = [22.0 14.7]; %mm: http://www.cnet.com/products/canon-eos-rebel-t3/specs/
+imgsz = size(A);
+f = imgsz([2 1]).*(FocalLength./SensorSize); 
+
+%known camera location: 
+cameralocation = [446722.0 7396671.0 770.0]; 
+
+%crude estimate of look direction.
+camA = camera(cameralocation,size(A),[200 0 0]*pi/180,f); %loooking west
+
+%Use GCPs to optimize the following camera parameters:
+%view dir, focal lengths, and a simple radial distortion model
+[camA,rmse,aic] = camA.optimizecam(gcpA(:,1:3),gcpA(:,4:5),'00000111110010000000');
+fprintf('reprojectionerror = %3.1fpx  AIC:%4.0f\n',rmse,aic) 
+
+%Visually compare the projection of the GCPs with the pixel coords:
+figure
+axes('position',[0 .1 1 .8]); hold on
+image(A)
+axis equal off ij tight
+hold on
+uv = camA.project(gcpA(:,1:3));
+h = plot(gcpA(:,4),gcpA(:,5),'+',uv(:,1),uv(:,2),'rx');
+legend(h,'UV of GCP','projection of GCPs','location','southoutside')
+title(sprintf('Projection of ground control points. RMSE = %.1fpx',rmse))
+
+
+
+
+
+%% Determine view direction of camera B.
+%
+% # find movement of rock features between images A and B
+% # determine camera B by pertubing viewdir of camera A. 
+
+
+% First get an approximate estimate of the image shift using a single large
+% template
+[duoffset,dvoffset] = templatematch(A,B,3000,995,'templatewidth',261,'searchwidth',400,'supersample',0.5,'showprogress',false)
+
+% Get a whole bunch of image shift estimates using a grid of probe points.
+% Having multiple shift estimates will allow us to determine camera
+% rotation.
+[pu,pv] = meshgrid(200:700:4000,100:400:1000);
+pu = pu(:); pv = pv(:)+pu/10; 
+
+[du,dv,C] = templatematch(A,B,pu,pv,'templatewidth',61,'searchwidth',81,'supersample',3,'initialdu',duoffset,'initialdv',dvoffset);
+
+
+% Determine camera rotation between A and B from the set of image
+% shifts.
+
+% find 3d coords consistent with the 2d pixel coords in points.
+xyz = camA.invproject([pu pv]);
+% the projection of xyz has to match the shifted coords in points+dxy:
+
+[camB,rmse] = camA.optimizecam(xyz,[pu+du pv+dv],'00000111000000000000'); %optimize 3 view direction angles to determine camera B. 
+rmse
+
+%quantify the shift between A and B in terms of an delta angle. 
+DeltaViewDirection = (camB.viewdir-camA.viewdir)*180/pi 
+
+
+
+%% Generate a set of points to be tracked between images
+%
+% # Generate a regular grid of candidate points in world coordinates.
+% # Cull the set of candidate points to those that are visible and glaciated 
+%
+%
+
+% The viewshed is all the points of the dem that are visible from the
+% camera location. They may not be in the field of view of the lens. 
+dem.visible = voxelviewshed(dem.X,dem.Y,dem.filled,camA.xyz);
+
+%Make a regular 50 m grid of points we would like to track from image A 
+[XA,YA] = meshgrid(min(dem.x):50:max(dem.x),min(dem.y):50:max(dem.y));
+ZA = interp2(dem.X,dem.Y,dem.filled,XA,YA);
+
+%Figure out which pixel coordinates they correspond to:
+[uvA,~,inframe] = camA.project([XA(:) YA(:) ZA(:)]); %where would the candidate points be in image A
+
+%Insert nans where we do not want to track:
+keepers = double(dem.visible&dem.mask); %visible & glaciated dem points 
+keepers = filter2(ones(11)/(11^2),keepers); %throw away points close to the edge of visibility 
+keepers = interp2(dem.X,dem.Y,keepers,X(:),Y(:))>.99; %which candidate points fullfill the criteria.
+uvA(~(keepers&inframe)) = nan;
+
+%% Track points between images.
+
+% calculate where points would be in image B if no ice motion 
+% ( i.e. accounting only for camera shake)
+camshake = camB.project(camA.invproject(uvA))-uvA;
+
+options = [];
+options.pu = uvA(:,1);
+options.pv = uvA(:,2);
+options.method = 'OC';
+options.showprogress = true;
+options.searchwidth = 81; 
+options.templatewidth = 21;
+options.supersample = 2; %supersample the input images for better subpixel estimation
+options.initialdu = camshake(:,1);
+options.initialdv = camshake(:,2);
+
+[du,dv,C,Cnoise] = templatematch(A,B,options); 
+
+uvB = uvA+[du dv];
+
+signal2noise = C./Cnoise;
+
+%% Georeference tracked points
+% ... and calculate velocities
+xyzA = camA.invproject(uvA,dem.X,dem.Y,dem.filled); % has to be recalculated because uvA has been rounded.
+xyzB = camB.invproject(uvB,dem.X,dem.Y,dem.filled-dem.mask*22.75*(tB-tA)/365); % impose a thinning of the DEM of 23m/yr between images.
+V = (xyzB-xyzA)./(tB-tA); % 3d velocity.
+
+Vx = reshape(V(:,1),size(XA));
+Vy = reshape(V(:,2),size(YA));
+Vz = reshape(V(:,3),size(ZA));
+
+
+figure;
+showimg(dem.x,dem.y,dem.rgb);
+hold on
+Vn = sqrt(sum(V(:,1:2).^2,2));
+keep = signal2noise>2 & C>.7;
+alphawarp(XA,YA,sqrt(Vx.^2+Vy.^2))
+quiver(xyzA(keep,1),xyzA(keep,2),V(keep,1)./Vn(keep),V(keep,2)./Vn(keep),.2,'k')
+caxis([0 1])
+colormap hot
+hcb = colorbar('southoutside');
+plot(camA.xyz(1),camA.xyz(2),'r+')
+title('Velocity in metres per day')
+
+
+
+%% Project velocity onto downhill slope direction
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% The largest error in the velocities will along the view direction vector.
+% By projecting to the slope direction we strongly suppress errors arising
+% from this. 
+
+
+[gradX,gradY] = gradient(dem.filled,dem.X(2,2)-dem.X(1,1),dem.Y(2,2)-dem.Y(1,1));
+gradN = sqrt(gradX.^2+gradY.^2);
+gradX = -gradX./gradN;gradY = -gradY./gradN;
+gradX = interp2(dem.X,dem.Y,gradX,XA,YA);
+gradY = interp2(dem.X,dem.Y,gradY,XA,YA);
+Vgn = Vx.*gradX+Vy.*gradY;%Velocity along glacier
+Vacross = Vx.*gradY-Vy.*gradX; %Velocity across glacier
+
+keep = reshape(keep,size(XA));
+
+%We do not trust regions with large across glacier flow. We may get large errors where the motion is
+%in and out of the frame. I.e. in places where the glacier surface is
+%viewed very obliquely. In those places we do not have a sufficiently good
+%view to calculate velocities. We apply a filter to remove these.
+keep = keep&(abs(Vgn)>abs(Vacross));
+
+close all
+figure
+showimg(dem.x,dem.y,dem.rgb);
+axis equal xy off tight
+
+hold on
+alphawarp(XA,YA,Vgn,keep*.7)
+quiver(XA(keep),YA(keep),gradX(keep),gradY(keep),.2,'k')
+
+caxis([0 1])
+colormap hot
+hcb = colorbar('southoutside');
+
+plot(camA.xyz(1),camA.xyz(2),'r+')
+title('Velocity along slope direction in metres per day')
+
+
+##### SOURCE END #####
+--></body></html>

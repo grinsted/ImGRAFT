@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Camera - ImGRAFT documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Camera";
+        var mkdocs_page_input_path = "camera.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ImGRAFT documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Frontpage</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../functions/">Functions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../demos/">Demos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../faq/">FAQ</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ImGRAFT documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Camera</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="cameram">Camera.m</h2>
+<p>The camera model holds both all the internal camera parameters (focal lengths, distortion coefficients, etc) and all the external camera parameters (camera location and view direction). This class can be used to project back and forth between pixel and world coordinates once the camera parameters have been specified. It can also be used to calibrate the camera parameters given a set of ground control points.</p>
+<p>A good example of how the camera class is used can be found in the <a href="../demoengabreen/">Engabreen</a> example.</p>
+<pre><code>   imgsz   - size of image in pixels [#rows, #columns]  camera properties:
+   f       - focal length in pixel units (two element vector [fx,fy])
+   c       - camera center in pixel coordinates (two element vector: [cx,cy])
+   k       - radial distortion coefficients. (six element vector: [k1-k6])
+   p       - tangential distortion coefficients (two element vector: [p1,p2])
+   xyz     - world coordinates of camera.
+   viewdir - [yaw,pitch,roll]. Yaw: rotation about z (0=looking east)
+                               Pitch: look up/down angle
+                               Roll: camera roll (horizon tilt).
+
+  camera Dependent/derived properties:
+   (i.e. properties calculated from the camera parameters)
+   R         - camera rotation matrix calculated from camera view
+               direction (read only)
+   fullmodel - a 20-element vector containing all camera properties.
+               [camx,camy,camz,imgszy,imgszx,viewdiryaw,viewdirpitch,viewdirroll,fx,fy,cx,cy,k1-6,p1-2]
+
+  camera Methods:
+   camera      - constructor
+   optimizecam - optimize the camera to mimimize misfit between
+                 projected world coordinates and pixel coordinates.
+   project     - project world coordinates to image coordinates (3d-&gt;2d)
+   invproject  - project image coordinates to world coordinates (2d-&gt;3d)
+</code></pre>
+<h2 id="setting-up-camera-parameters">Setting up camera parameters</h2>
+<p>You setup the camera parameters using its contructor and then you can modify the parameters afterwards. E.g. like this:</p>
+<pre><code class="language-matlab">cam=camera([446722 7396671 770]) %specifying world coordinates only
+cam.f=[6000 6000];
+cam.viewdir=[90 0 0]*pi/180; %looking north
+</code></pre>
+<p>The <a href="../demoengabreen/">Engabreen</a> and <a href="../demoschneeferner/">Schneefernerkopf</a> examples show some practical use cases. There are additional ways the constructor can be called. Type "help camera.camera" on the matlab prompt to see the full help of the constructor. </p>
+<h2 id="calibrating-camera-parameters-from-ground-control-points">Calibrating camera parameters from ground control points</h2>
+<p>The camera class contains an optimizeCam method which can be used to calibrate the camera and also determine the external camera parameters. You give it a set of ground control points. I.e. a set of 3d world coordinates and corresponding pixel coordinates. OptimizeCam will then work to minimize the misfit between the projected 3d points and the pixel coordinates. You can specify which parameters which are free in the optimization. </p>
+<pre><code class="language-matlab">[newcamera,rmse,AIC] = cam.optimizecam(worldcoordinates,pixelcoordinates,'00000111000000000000')
+</code></pre>
+<p>In this case the string '00000111000000000000' says that the 6,7,8th parameters should be free. The ordering here refers to the ordering in the "fullmodel" where 6-8 corresponds to the three view direction angle. So, in this case we are only optimizing the view direction of the camera. </p>
+<p>The <a href="../demoengabreen/">Engabreen</a> and <a href="../demoschneeferner/">Schneefernerkopf</a> examples show how a simple radial distortion model is determined from the ground control points. Type "help camera.optimizeCam" on the matlab prompt for more details on how to use it. </p>
+<p>Projecting from world coordinates to image coordinates (3d to 2d)
+The project method makes it simple to project from world coordinates to pixel coordinates.</p>
+<pre><code class="language-matlab"> [uv,~,inframe]=cam.project(xyz)
+</code></pre>
+<p>Here uv are the projected pixel coordinates. inframe is a boolean array which is true if the projected point is within the frame of the image. </p>
+<p><img alt="" src="../img/example_01.png" /></p>
+<p>See the <a href="../demoschneeferner/">Schneefernerkopf</a> example for a simple example how it can be used.
+Projecting from image coordinates to world coordinates (2d to 3d)
+Projecting from 2d to 3d can also be considered raytracing conceptually. Usually you want to find the point on a DEM, that corresponds to the pixel coordinates after projection. You can do this with invproject . </p>
+<pre><code class="language-matlab">xyz=cam.invproject(uv,demX,demY,demZ)
+</code></pre>
+<p>The <a href="../demoengabreen/">Engabreen example</a> shows how this can be used in practice. Type "help camera.invproject" on the matlab prompt for more details on how to use it. 
+How do you calculate the focal length in pixel units from the camera specifications?
+The focal length from the manufacturer alone does not determine the field of view / zoom level of a lens. The focal length in mm together with sensor size and image size determines the field of view that the lens is able to see. The camera needs the focal length in pixel units. These can be calculated thus:</p>
+<pre><code class="language-matlab">FocalLength=30; %mm (as per lens specifications)
+SensorSize=[22.0 14.8]; %mm (this is the physical size of the sensor in the camera. It will depend on model.)
+imgsz=size(A);
+f=imgsz([2 1]).*(FocalLength./SensorSize);
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

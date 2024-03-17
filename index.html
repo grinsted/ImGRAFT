@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="An image georectification and feature tracking toolbox for MATLAB" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>ImGRAFT documentation</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Frontpage";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> ImGRAFT documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href=".">Frontpage</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#features">Features</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#licensing">Licensing</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#acknowledgements">Acknowledgements</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="functions/">Functions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="demos/">Demos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="faq/">FAQ</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">ImGRAFT documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Frontpage</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <p><a href="/"><img alt="ImGRAFT" src="img/imgraftlogo.png" /></a></p>
+<h2 id="imgraft">ImGRAFT</h2>
+<p><em>An image georectification and feature tracking toolbox for MATLAB</em></p>
+<p>This software is open source (See licensing details elsewhere). In addition to the formal licensing terms, We would greatly appreciate an acknowledgement. Preferably in the form of a citation and a link to the web-page.</p>
+<p>Citation: Messerli, A. and Grinsted, A. (2015), Image GeoRectification And Feature Tracking toolbox: ImGRAFT, Geosci. Instrum. Method. Data Syst., 4, 23-34, doi:<a href="http://dx.doi.org/10.5194/gi-4-23-2015">10.5194/gi-4-23-2015</a></p>
+<h3 id="features">Features</h3>
+<ul>
+<li>Feature tracking between image pairs using template matching.</li>
+<li>Full processing line from feature tracking to georectification.</li>
+<li>Distorted camera model. This allows the use of cheaper camera setups.</li>
+<li>Avoiding traditional image registration as a pre-processing step as it degrades the images due to resampling. ImGRAFT will instead optimize camera view for each image.</li>
+<li>Projecting between pixel and real world coordinates. 2D ↔ 3D</li>
+<li>Easily scriptable as it is a toolbox.</li>
+<li>Minimal dependencies. (No other toolboxes required).</li>
+<li>Inputs to feature tracking: two images</li>
+<li>Inputs to georectification: a DEM and some ground control points.</li>
+</ul>
+<p>We hope you will find this package useful. We would be grateful for any feedback and example use-cases.</p>
+<p>Authors: <a href="http://www.glaciology.net">Aslak Grinsted</a> &amp; Alexandra Messerli</p>
+<p><img alt="Engabreen 3d view" src="img/enga3d.png" /></p>
+<h3 id="licensing">Licensing</h3>
+<p>The majority of the code is licensed under a very permissive MIT license, but some routines and example data are licensed under other terms. See licensing details in LICENSE.txt and individual files.</p>
+<p>This software package includes the following open source codes licensed under other terms:</p>
+<ul>
+<li>LMFnlsq.m<ul>
+<li>Copyright Miroslav Balda. This is an implementation of the Levenberg-Marquardt algorithm as modified by Fletcher. It is used in the least squares optimization of the camera parameters. See licensing details in LMFnlsq.</li>
+</ul>
+</li>
+</ul>
+<h3 id="acknowledgements">Acknowledgements</h3>
+<p>This software has been developed at <a href="http://www.iceandclimate.nbi.ku.dk">Centre for Ice and Climate</a>, Niels Bohr Institute, University of Copenhagen as part of the <a href="http://www.ncoe-svali.org/">SVALI project</a>. SVALI is a part of the <a href="http://www.norden.org/">Top-level Research Initiative</a> (TRI), which is a major Nordic collaborative venture for studies of climate, energy and the environment. We are also grateful to Miriam Jackson and <a href="http://nve.no">NVE</a> who has helped facilitate the Engabreen fieldwork and contributed with data.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="functions/" class="btn btn-neutral float-right" title="Functions">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="functions/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.5.3
+Build Date UTC : 2024-03-17 13:59:43.097967+00:00
+-->
