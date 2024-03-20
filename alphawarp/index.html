@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Functions - ImGRAFT documentation</title>
+    <title>Alphawarp - ImGRAFT documentation</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Functions";
-        var mkdocs_page_input_path = "functions.md";
+        var mkdocs_page_name = "Alphawarp";
+        var mkdocs_page_input_path = "alphawarp.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -47,16 +47,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../installation/">Install</a>
                 </li>
               </ul>
-              <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="./">Functions</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#templatematch">templatematch</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#cameram">camera.m</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#voxelviewshedm">voxelviewshed.m</a>
-    </li>
-    </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../functions/">Functions</a>
                 </li>
               </ul>
               <ul>
@@ -81,7 +73,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Functions</li>
+      <li class="breadcrumb-item active">Alphawarp</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -90,25 +82,24 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="key-functions-and-classes-in-the-package">Key Functions and classes in the package</h1>
-<h2 id="templatematch"><a href="../templatematch/">templatematch</a></h2>
-<p>... is the function which tracks the displacement between two images.  </p>
-<h2 id="cameram"><a href="../camera/">camera.m</a></h2>
-<p>... is a class which can be used to project between pixel and world coordinates.</p>
-<h2 id="voxelviewshedm"><a href="../voxelviewshed/">voxelviewshed.m</a></h2>
-<p>... is a fast function for calculating the viewshed of a dem from a given viewpoint.</p>
-<h1 id="utility-functions">Utility functions</h1>
-<h2 id="showimg"><a href="../showimg/">showimg</a></h2>
-<p>... displays an image at specific coordinates.</p>
-<h2 id="alphawarp"><a href="../alphawarp/">alphawarp</a></h2>
-<p>... drapes a semi-transparent and possibly distorted image over a figure. </p>
+                <h2 id="alphawarp">alphawarp</h2>
+<p>Drapes a semi-transparent and possibly distorted image over a figure.</p>
+<p>This can be used to display a variable on top of a background image.</p>
+<pre><code class="language-matlab">  USAGE: h=alphawarp(x,y,c,alpha)
+
+  EXAMPLE:
+
+  P=imread('peppers.png');
+  P=repmat(mean(im2double(P),3),[1 1 3]);%make a (gray) RGB-image so that it does not influence colorbar
+  image(P);
+  [X,Y]=meshgrid(100:300,100:300);
+  X=X+Y*.1;
+  Z=peaks((X-150)/100,(Y-150)/100);
+  alphawarp(X,Y,Z,.5);
+</code></pre>
               
             </div>
           </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../installation/" class="btn btn-neutral float-left" title="Install"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../demos/" class="btn btn-neutral float-right" title="Demos">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
 
   <hr/>
 
@@ -130,10 +121,6 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../installation/" style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../demos/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
